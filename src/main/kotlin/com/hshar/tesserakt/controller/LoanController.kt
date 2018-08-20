@@ -7,15 +7,13 @@ import com.google.gson.JsonObject
 import com.hshar.tesserakt.model.Loan
 import com.hshar.tesserakt.repository.LoanRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 @RestController
+@RequestMapping("/api")
 class LoanController {
     @Autowired
     lateinit var loanRepository: LoanRepository

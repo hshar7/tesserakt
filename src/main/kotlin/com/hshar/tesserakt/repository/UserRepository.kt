@@ -4,7 +4,7 @@ import com.hshar.tesserakt.model.User
 import org.springframework.data.mongodb.repository.MongoRepository
 import java.util.*
 
-interface UserRepository : MongoRepository<User, Long> {
+interface UserRepository : MongoRepository<User, String> {
     fun findByEmail(email: String): Optional<User>
     fun findByUsernameOrEmail(username: String, email: String): Optional<User>
     fun findByIdIn(userIds: List<Long>): List<User>

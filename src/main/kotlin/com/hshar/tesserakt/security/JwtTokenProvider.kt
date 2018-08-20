@@ -31,13 +31,13 @@ class JwtTokenProvider {
                 .compact()
     }
 
-    fun getUserIdFromJWT(token: String): Long {
+    fun getUserIdFromJWT(token: String): String {
         val claims = Jwts.parser()
                 .setSigningKey(jwtSecret)
                 .parseClaimsJws(token)
                 .body
 
-        return claims.subject.toLong()
+        return claims.subject
     }
 
     fun validateToken(authToken: String): Boolean {

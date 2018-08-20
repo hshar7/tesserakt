@@ -64,7 +64,6 @@
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-reflect</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.github.salomonbrys.kotson</groupId>
 			<artifactId>kotson</artifactId>
@@ -126,6 +125,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-
 </project>
