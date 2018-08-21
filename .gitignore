@@ -27,3 +27,4 @@
 ### Tessereakt ###
 /tessereakt/node_modules/*
 /tessereakt-material/node_modules/*
+/tessereakt-material-pro/node_modules/*
