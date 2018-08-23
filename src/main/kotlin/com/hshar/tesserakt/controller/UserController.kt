@@ -23,7 +23,7 @@ class UserController {
     @GetMapping("/user/me")
     @PreAuthorize("hasRole('USER')")
     fun getCurrentUser(@CurrentUser currentUser: UserPrincipal): UserSummary {
-        return UserSummary(currentUser.id, currentUser.username, currentUser.name)
+        return UserSummary(currentUser.id, currentUser.username, currentUser.name, currentUser.email)
     }
 
     @GetMapping("/user/checkUsernameAvailability")

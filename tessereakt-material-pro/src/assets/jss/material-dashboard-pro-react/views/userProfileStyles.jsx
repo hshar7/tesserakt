@@ -19,7 +19,7 @@ const userProfileStyles = {
     color: "#999999"
   },
   updateProfileButton: {
-    float: "right"
+    float: "center"
   }
 };
 export default userProfileStyles;

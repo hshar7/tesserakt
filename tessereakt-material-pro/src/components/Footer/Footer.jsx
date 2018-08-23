@@ -27,7 +27,7 @@ function Footer({ ...props }) {
   });
   return (
     <footer className={classes.footer}>
-      <div className={container}>
+      {/* <div className={container}>
         <div className={classes.left}>
           <List className={classes.list}>
             <ListItem className={classes.inlineBlock}>
@@ -54,14 +54,11 @@ function Footer({ ...props }) {
         </div>
         <p className={classes.right}>
           &copy; {1900 + new Date().getYear()}{" "}
-          <a href="https://www.creative-tim.com" className={anchor}>
-            {rtlActive ? "توقيت الإبداعية" : "Creative Tim"}
+          <a href="./" className={anchor}>
+            {rtlActive ? "تسراكت": "tesserakt"}
           </a>
-          {rtlActive
-            ? ", مصنوعة مع الحب لشبكة الإنترنت أفضل"
-            : ", made with love for a better web"}
         </p>
-      </div>
+      </div> */}
     </footer>
   );
 }

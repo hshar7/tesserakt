@@ -16,14 +16,33 @@ import Hidden from "@material-ui/core/Hidden";
 import Collapse from "@material-ui/core/Collapse";
 import Icon from "@material-ui/core/Icon";
 
+//modal
+import Slide from "@material-ui/core/Slide";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+// @material-ui/icons
+import Close from "@material-ui/icons/Close";
+// core components
+import Button from "components/CustomButtons/Button.jsx";
+
+import modalStyle from "assets/jss/material-dashboard-pro-react/modalStyle.jsx";
+
 // core components
 import HeaderLinks from "components/Header/HeaderLinks.jsx";
 
 import sidebarStyle from "assets/jss/material-dashboard-pro-react/components/sidebarStyle.jsx";
-
 import avatar from "assets/img/faces/avatar.jpg";
 
+// api components
+import { getCurrentUser } from "APIUtils";
+
 var ps;
+
+function Transition(props) {
+  return <Slide direction="down" {...props} />;
+}
 
 // We've created this component so we can have a ref to the wrapper of the links that appears in our sidebar.
 // This was necessary so that we could initialize PerfectScrollbar on the links.
@@ -65,7 +84,11 @@ class Sidebar extends React.Component {
       openTables: this.activeRoute("/tables"),
       openMaps: this.activeRoute("/maps"),
       openPages: this.activeRoute("-page"),
-      miniActive: true
+      miniActive: true,
+      username: "",
+      userEmail: "",
+      usersName: "",
+      modal: false
     };
     this.activeRoute.bind(this);
   }
@@ -78,6 +101,31 @@ class Sidebar extends React.Component {
     st[collapse] = !this.state[collapse];
     this.setState(st);
   }
+
+  getUsername() {
+    getCurrentUser().then(response => {
+      this.setState({['usersName']: response["name"]});
+      this.setState({['username']: response["username"]});
+      this.setState({['userEmail']: response["email"]});
+    });
+  }
+
+  componentDidMount() {
+    this.getUsername();
+  }
+
+  handleClickOpen(modal) {
+    var x = [];
+    x[modal] = true;
+    this.setState(x);
+  }
+
+  handleClose(modal) {
+    var x = [];
+    x[modal] = false;
+    this.setState(x);
+  }
+
   render() {
     const {
       classes,
@@ -145,7 +193,7 @@ class Sidebar extends React.Component {
               onClick={() => this.openCollapse("openAvatar")}
             >
               <ListItemText
-                primary={rtlActive ? "تانيا أندرو" : "Tania Andrew"}
+                primary={this.state.usersName}
                 secondary={
                   <b
                     className={
@@ -164,62 +212,61 @@ class Sidebar extends React.Component {
             <Collapse in={this.state.openAvatar} unmountOnExit>
               <List className={classes.list + " " + classes.collapseList}>
                 <ListItem className={classes.collapseItem}>
-                  <NavLink
-                    to="#"
-                    className={
-                      classes.itemLink + " " + classes.userCollapseLinks
-                    }
-                  >
-                    <span className={collapseItemMini}>
-                      {rtlActive ? "مع" : "MP"}
-                    </span>
-                    <ListItemText
-                      primary={rtlActive ? "ملفي" : "My Profile"}
-                      disableTypography={true}
-                      className={collapseItemText}
-                    />
-                  </NavLink>
+                  
+                <Button
+                  color="transparent"
+                  size="sm"
+                  onClick={() => this.handleClickOpen("modal")}>
+                  My Profile
+                </Button>
                 </ListItem>
                 <ListItem className={classes.collapseItem}>
-                  <NavLink
-                    to="#"
-                    className={
-                      classes.itemLink + " " + classes.userCollapseLinks
-                    }
-                  >
-                    <span className={collapseItemMini}>
-                      {rtlActive ? "هوع" : "EP"}
-                    </span>
-                    <ListItemText
-                      primary={
-                        rtlActive ? "تعديل الملف الشخصي" : "Edit Profile"
-                      }
-                      disableTypography={true}
-                      className={collapseItemText}
-                    />
-                  </NavLink>
-                </ListItem>
-                <ListItem className={classes.collapseItem}>
-                  <NavLink
-                    to="#"
-                    className={
-                      classes.itemLink + " " + classes.userCollapseLinks
-                    }
-                  >
-                    <span className={collapseItemMini}>
-                      {rtlActive ? "و" : "S"}
-                    </span>
-                    <ListItemText
-                      primary={rtlActive ? "إعدادات" : "Settings"}
-                      disableTypography={true}
-                      className={collapseItemText}
-                    />
-                  </NavLink>
+                <Button
+                  color="transparent"
+                  size="sm"
+                  round
+                  onClick={() => this.handleClickOpen("modal")}>
+                  Edit Profile
+                </Button>
                 </ListItem>
               </List>
             </Collapse>
           </ListItem>
         </List>
+        {/* SHOW PROFILE MODAL */}
+        <Dialog
+          classes={{
+            root: classes.center,
+            paper: classes.modal
+          }}
+          open={this.state.modal}
+          transition={Transition}
+          keepMounted
+          onClose={() => this.handleClose("modal")}
+          aria-labelledby="modal-slide-title"
+          aria-describedby="modal-slide-description">
+          <DialogTitle
+            id="classic-modal-slide-title"
+            className={classes.modalHeader}>
+            <h4 className={classes.modalTitle}>User Information</h4>
+          </DialogTitle>
+          <DialogContent
+            id="modal-slide-description"
+            className={classes.modalBody}>
+            <h5>Name: {this.state.usersName} </h5>
+            <h5>Username: {this.state.username} </h5>
+            <h5>Email: {this.state.userEmail} </h5>
+
+          </DialogContent>
+          <DialogActions
+            className={classes.modalFooter +" " +classes.modalFooterCenter}>
+            <Button
+              onClick={() => this.handleClose("modal")}
+              color="simple">
+              Ok
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     );
     var links = (
@@ -402,10 +449,10 @@ class Sidebar extends React.Component {
       });
     var brand = (
       <div className={logoClasses}>
-        <a href="https://www.creative-tim.com" className={logoMini}>
+        <a href="./" className={logoMini}>
           <img src={logo} alt="logo" className={classes.img} />
         </a>
-        <a href="https://www.creative-tim.com" className={logoNormal}>
+        <a href="./" className={logoNormal}>
           {logoText}
         </a>
       </div>
@@ -510,4 +557,4 @@ Sidebar.propTypes = {
   routes: PropTypes.arrayOf(PropTypes.object)
 };
 
-export default withStyles(sidebarStyle)(Sidebar);
+export default withStyles(sidebarStyle, modalStyle)(Sidebar);
