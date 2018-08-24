@@ -14,6 +14,7 @@ import Card from "components/Card/Card.jsx";
 import CardHeader from "components/Card/CardHeader.jsx";
 import CardIcon from "components/Card/CardIcon.jsx";
 import CardBody from "components/Card/CardBody.jsx";
+import { allDeals } from "../../APIUtils";
 
 import { cardTitle } from "assets/jss/material-dashboard-pro-react.jsx";
 
@@ -29,146 +30,48 @@ const style = {
   }
 };
 
-function RegularTables({ ...props }) {
-  const { classes } = props;
-  return (
-    <GridContainer>
-      <GridItem xs={12}>
-        <Card>
-          <CardHeader color="rose" icon>
-            <CardIcon color="rose">
-              <Assignment />
-            </CardIcon>
-            <h4 className={classes.cardIconTitle}>Simple Table</h4>
-          </CardHeader>
-          <CardBody>
-            <Table
-              tableHeaderColor="primary"
-              tableHead={["Name", "Country", "City", "Salary"]}
-              tableData={[
-                ["Dakota Rice", "Niger", "Oud-Turnhout", "$36,738"],
-                ["Minerva Hooper", "Curaçao", "Sinaai-Waas", "$23,789"],
-                ["Sage Rodriguez", "Netherlands", "Baileux", "$56,142"],
-                ["Philip Chaney", "Korea, South", "Overland Park", "$38,735"],
-                ["Doris Greene", "Malawi", "Feldkirchen in Kärnten", "$63,542"],
-                ["Mason Porter", "Chile", "Gloucester", "$78,615"]
-              ]}
-              coloredColls={[3]}
-              colorsColls={["primary"]}
-            />
-          </CardBody>
-        </Card>
-      </GridItem>
-      <GridItem xs={12}>
-        <Card plain>
-          <CardHeader color="rose" icon plain>
-            <CardIcon color="rose">
-              <Assignment />
-            </CardIcon>
-            <h4 className={classes.cardIconTitle}>
-              Table on Plain Background<small>
-                {" "}
-                - Here is a subtitle for this table
-              </small>
-            </h4>
-          </CardHeader>
-          <CardBody plain>
-            <Table
-              hover
-              tableHead={["ID", "Name", "Salary", "Country", "City"]}
-              tableData={[
-                ["1", "Dakota Rice", "$36,738", "Niger", "Oud-Turnhout"],
-                ["2", "Minerva Hooper", "$23,789", "Curaçao", "Sinaai-Waas"],
-                ["3", "Sage Rodriguez", "$56,142", "Netherlands", "Baileux"],
-                [
-                  "4",
-                  "Philip Chaney",
-                  "$38,735",
-                  "Korea, South",
-                  "Overland Park"
-                ],
-                [
-                  "5",
-                  "Doris Greene",
-                  "$63,542",
-                  "Malawi",
-                  "Feldkirchen in Kärnten"
-                ],
-                ["6", "Mason Porter", "$78,615", "Chile", "Gloucester"]
-              ]}
-            />
-          </CardBody>
-        </Card>
-      </GridItem>
-      <GridItem xs={12}>
-        <Card>
-          <CardHeader color="rose" icon>
-            <CardIcon color="rose">
-              <Assignment />
-            </CardIcon>
-            <h4 className={classes.cardIconTitle}>Regular Table with Colors</h4>
-          </CardHeader>
-          <CardBody className={classes.customCardContentClass}>
-            <Table
-              hover
-              tableHead={["ID", "Name", "Salary", "Country", "City"]}
-              tableData={[
-                {
-                  color: "success",
-                  data: [
-                    "1",
-                    "Dakota Rice (Success)",
-                    "$36,738",
-                    "Niger",
-                    "Oud-Turnhout"
-                  ]
-                },
-                ["2", "Minerva Hooper", "$23,789", "Curaçao", "Sinaai-Waas"],
-                {
-                  color: "info",
-                  data: [
-                    "3",
-                    "Sage Rodriguez (Info)",
-                    "$56,142",
-                    "Netherlands",
-                    "Baileux"
-                  ]
-                },
-                [
-                  "4",
-                  "Philip Chaney",
-                  "$38,735",
-                  "Korea, South",
-                  "Overland Park"
-                ],
-                {
-                  color: "danger",
-                  data: [
-                    "5",
-                    "Doris Greene (Danger)",
-                    "$63,542",
-                    "Malawi",
-                    "Feldkirchen in Kärnten"
-                  ]
-                },
-                ["6", "Mason Porter", "$78,615", "Chile", "Gloucester"],
-                {
-                  color: "warning",
-                  data: [
-                    "7",
-                    "Mike Chaney (Warning)",
-                    "$38,735",
-                    "Romania",
-                    "Bucharest"
-                  ]
-                }
-              ]}
-            />
-          </CardBody>
-        </Card>
-      </GridItem>
-    </GridContainer>
-  );
+class RegularTables extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      object: []
+    };
+    this.componentWillMount = this.componentWillMount.bind(this);
+  }
+
+  componentWillMount() {
+    allDeals().then(response => {
+      this.setState({object: response});
+    }).catch(error => {
+      // TODO: Do something else in case of error
+    });
+  }
+
+  render() {
+    const { classes } = this.props;
+    let listItems = [];
+    this.state.object.map((object) => listItems.push([object.jurisdiction, object.loanType, "$" + object.capitalAmount + "m", object.interestRate + "%", object.maturity, object.assetClass, object.assetRating, object.issuingPartyRiskProfile, object.status]));
+    return (
+      <GridContainer>
+        <GridItem xs={12}>
+          <Card>
+            <CardHeader>
+              <h4 className={classes.cardIconTitle}>Loans</h4>
+            </CardHeader>
+            <CardBody>
+              <Table
+                tableHeaderColor="primary"
+                tableHead={["Jurisdiction", "Type", "Capital Amount", "Interest Rate", "Maturity", "Asset Class", "Asset Rating", "Issuing Risk Profile", "Status"]}
+                tableData={listItems}
+                coloredColls={[3]}
+                colorsColls={["primary"]}
+              />
+            </CardBody>
+          </Card>
+        </GridItem>
+      </GridContainer>
+    );
+  }
 }
 
 export default withStyles(style)(RegularTables);

@@ -79,3 +79,10 @@ export function newDeal(requestObject) {
         body: JSON.stringify(requestObject)
     });
 }
+
+export function allDeals() {
+    return request({
+        url: API_BASE_URL + "/deals",
+        method: 'GET'
+    });
+}

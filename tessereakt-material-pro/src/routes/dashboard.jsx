@@ -65,7 +65,7 @@ var dashRoutes = [
         path: "/issuance/view",
         name: "Live Deals",
         mini: "GS",
-        component: GridSystem
+        component: RegularTables
       }
     ]
   },

@@ -21,18 +21,24 @@ class LoanController {
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
-    fun getLoan(@PathVariable id: String): Loan {
+    fun getDeal(@PathVariable id: String): Loan {
         return loanRepository.findOneByUuid(id)
     }
 
     @PostMapping("/deal")
     @PreAuthorize("hasRole('USER')")
-    fun postLoan(@RequestBody body: String): Loan {
+    fun createDeal(@RequestBody body: String): Loan {
         val loan = Gson().fromJson<JsonObject>(body)
         loan["uuid"] = UUID.randomUUID().toString()
         loan["status"] = "live"
         loan["createdAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
         loan["updatedAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
         return loanRepository.insert(Gson().fromJson<Loan>(loan))
+    }
+
+    @GetMapping("/deals")
+    @PreAuthorize("hasRole('USER')")
+    fun getAllDeals(): List<Loan> {
+        return loanRepository.findAll()
     }
 }

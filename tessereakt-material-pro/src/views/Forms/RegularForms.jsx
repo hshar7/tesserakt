@@ -245,7 +245,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                       }}
-                          value="2"
+                          value="Term"
                         >
                           Term
                         </MenuItem>
@@ -254,7 +254,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                             }}
-                          value="3"
+                          value="Revolver"
                         >
                           Revolver
                         </MenuItem>
@@ -263,7 +263,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                         }}
-                          value="4"
+                          value="Any"
                         >
                           Any
                         </MenuItem>
@@ -347,7 +347,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                       }}
-                          value="2"
+                          value="Investment Grade"
                         >
                           Investment Grade
                         </MenuItem>
@@ -356,7 +356,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                             }}
-                          value="3"
+                          value="Non-rated"
                         >
                           Non-rated
                         </MenuItem>
@@ -365,7 +365,7 @@ class RegularForms extends React.Component {
                             root: classes.selectMenuItem,
                             selected: classes.selectMenuItemSelected
                         }}
-                          value="4"
+                          value="Any"
                         >
                           Any
                         </MenuItem>
