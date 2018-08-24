@@ -71,3 +71,11 @@ export function getUserProfile(username) {
         method: 'GET'
     });
 }
+
+export function newDeal(requestObject) {
+    return request({
+        url: API_BASE_URL + "/deal",
+        method: 'POST',
+        body: JSON.stringify(requestObject)
+    });
+}

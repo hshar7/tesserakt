@@ -59,7 +59,7 @@ var dashRoutes = [
         path: "/issuance/new",
         name: "Launch Deal",
         mini: "B",
-        component: Buttons
+        component: RegularForms
       },
       {
         path: "/issuance/view",

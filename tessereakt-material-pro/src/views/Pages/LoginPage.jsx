@@ -27,7 +27,7 @@ import { ACCESS_TOKEN } from '../../constants';
 import { login } from '../../APIUtils';
 import AddAlert from "@material-ui/icons/AddAlert";
 import Snackbars from "components/Snackbar/Snackbar.jsx";
-import { Redirect } from 'react-router-dom'
+import { Redirect } from 'react-router-dom';
 
 class LoginPage extends React.Component {
   constructor(props) {

@@ -7,6 +7,7 @@ import com.google.gson.JsonObject
 import com.hshar.tesserakt.model.Loan
 import com.hshar.tesserakt.repository.LoanRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -18,12 +19,14 @@ class LoanController {
     @Autowired
     lateinit var loanRepository: LoanRepository
 
-    @GetMapping("/loan")
-    fun getLoan(id: String): Loan {
+    @GetMapping("/deal/{id}")
+    @PreAuthorize("hasRole('USER')")
+    fun getLoan(@PathVariable id: String): Loan {
         return loanRepository.findOneByUuid(id)
     }
 
-    @PostMapping("/loan")
+    @PostMapping("/deal")
+    @PreAuthorize("hasRole('USER')")
     fun postLoan(@RequestBody body: String): Loan {
         val loan = Gson().fromJson<JsonObject>(body)
         loan["uuid"] = UUID.randomUUID().toString()

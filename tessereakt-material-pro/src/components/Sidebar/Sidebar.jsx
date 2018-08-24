@@ -31,12 +31,13 @@ import modalStyle from "assets/jss/material-dashboard-pro-react/modalStyle.jsx";
 
 // core components
 import HeaderLinks from "components/Header/HeaderLinks.jsx";
-
+import { Redirect } from 'react-router-dom';
 import sidebarStyle from "assets/jss/material-dashboard-pro-react/components/sidebarStyle.jsx";
 import avatar from "assets/img/faces/avatar.jpg";
 
 // api components
 import { getCurrentUser } from "APIUtils";
+import { ACCESS_TOKEN } from '../../constants';
 
 var ps;
 
@@ -88,7 +89,8 @@ class Sidebar extends React.Component {
       username: "",
       userEmail: "",
       usersName: "",
-      modal: false
+      modal: false,
+      redirect: false
     };
     this.activeRoute.bind(this);
   }
@@ -124,6 +126,25 @@ class Sidebar extends React.Component {
     var x = [];
     x[modal] = false;
     this.setState(x);
+  }
+
+  logoutUser() {
+    localStorage.removeItem(ACCESS_TOKEN);
+    this.setState({
+      redirect: true
+    });
+  }
+
+  renderRedirect = () => {
+    if (this.state.redirect) {
+      return <Redirect to='/' />
+    }
+  }
+
+  componentWillMount() {
+    if (!localStorage.getItem(ACCESS_TOKEN)) {
+      this.state.redirect = true;
+    }
   }
 
   render() {
@@ -229,6 +250,15 @@ class Sidebar extends React.Component {
                   Edit Profile
                 </Button>
                 </ListItem>
+                <ListItem className={classes.collapseItem}>
+                <Button
+                  color="transparent"
+                  size="sm"
+                  round
+                  onClick={() => this.logoutUser()}>
+                  Log Out
+                </Button>
+                </ListItem>
               </List>
             </Collapse>
           </ListItem>
@@ -267,6 +297,7 @@ class Sidebar extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+        {this.renderRedirect()}
       </div>
     );
     var links = (
