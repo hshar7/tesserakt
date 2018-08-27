@@ -5,7 +5,7 @@ jobs:
     working_directory: ~/tesserakt
 
     docker:
-      - image: circleci/openjdk:8-jdk-browsers
+      - image: circleci/10-jdk-node-browsers
 
     steps:
 
