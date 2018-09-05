@@ -33,6 +33,7 @@ jobs:
           name: Deploy jar artficat to ECR if branch is master
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              sudo gpasswd -a $USER docker
               docker build .
               sudo apt install python-pip python-dev
               sudo pip install awscli
