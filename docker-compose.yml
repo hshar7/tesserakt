@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  web:
+    build: .
+    restart: always
+    ports:
+    - 8080:8080
+  react:
+    build: ./tessereakt-material-pro/
+    restart: always
+    volumes:
+      - './tessereakt-material-pro:/usr/src/app'
+      - '/usr/src/app/node_modules'
+    ports:
+      - '80:3000'
+    environment:
+      - NODE_ENV=development

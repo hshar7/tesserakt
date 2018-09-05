@@ -28,3 +28,18 @@ jobs:
 
       - store_artifacts:
           path: target/tesserakt-0.0.1-SNAPSHOT.jar
+
+      - deploy:
+          name: Deploy jar artficat to ECR if branch is master
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker build .
+              sudo apt install python-pip python-dev
+              sudo pip install awscli
+              aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
+              aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
+              aws configure set default.region us-east-2
+              $(aws ecr get-login --no-include-email)
+              docker tag 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
+              docker push 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
+            fi
