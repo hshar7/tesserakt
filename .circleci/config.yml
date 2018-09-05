@@ -35,7 +35,7 @@ jobs:
           name: Deploy jar artficat to ECR if branch is master
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              docker build . --tag tesserakt_web
+              docker build . --tag 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
               sudo apt install python-pip python-dev
               sudo pip install awscli
               aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
