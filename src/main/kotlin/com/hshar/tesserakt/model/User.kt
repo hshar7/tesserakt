@@ -8,6 +8,7 @@ data class User (
         var name: String,
         var username: String,
         var email: String,
+        var organizationName: String,
         var password: String,
         var roles: Set<Role>
 )

@@ -83,6 +83,7 @@ class AuthenticationController {
                 signUpRequest.name,
                 signUpRequest.username,
                 signUpRequest.email,
+                signUpRequest.organizationName,
                 password,
                 Collections.singleton(userRole)
         )
