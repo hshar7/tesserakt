@@ -11,7 +11,7 @@ data class Deal(
         var capitalAmount: Int,
         var interestRate: Float,
         var loanType: String?,
-        var maturity: Int?,
+        var maturity: Int,
         var assetClass: String?,
         var assetRating: String?,
         var syndicateId: String,
