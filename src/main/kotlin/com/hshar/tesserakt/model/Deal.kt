@@ -5,8 +5,11 @@ import java.util.*
 
 @Document(collection="deals")
 data class Deal(
-        val uuid: String,
+        val id: String,
         val underwriterId: String,
+        var borrowerName: String,
+        var subscription: Int,
+        var borrowerDescription: String,
         var jurisdiction: String?,
         var capitalAmount: Int,
         var interestRate: Float,

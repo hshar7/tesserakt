@@ -42,11 +42,11 @@ class UserController {
         return UserIdentityAvailability(!userRepository.existsByEmail(email))
     }
 
-    @GetMapping("/users/{username}")
-    fun getUserProfile(@PathVariable(value = "username") username: String): UserProfile {
-        val user = userRepository.findByUsername(username)
-                .orElseThrow{ResourceNotFoundException("User", "username", username)}
+    @GetMapping("/users/{id}")
+    fun getUserProfileById(@PathVariable(value = "id") id: String): UserProfile {
+        val user = userRepository.findById(id)
+                .orElseThrow{ResourceNotFoundException("User", "id", id)}
 
-        return UserProfile(user.id, user.username, user.name)
+        return UserProfile(user.id, user.username, user.name, user.organizationName, user.email)
     }
 }

@@ -36,8 +36,8 @@ class DealController {
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
-    fun getDeal(@PathVariable id: String): Deal {
-        return dealRepository.findOneByUuid(id)
+    fun getDeal(@PathVariable id: String): String {
+        return deals.findOneById(id).toString()
     }
 
     @GetMapping("/deals-by-status")
@@ -51,10 +51,12 @@ class DealController {
     fun createDeal(@RequestBody body: String, @CurrentUser currentUser: UserPrincipal): Deal {
         val deal = Gson().fromJson<JsonObject>(body)
 
-        deal["uuid"] = UUID.randomUUID().toString()
+        deal["id"] = UUID.randomUUID().toString()
         deal["underwriterId"] = currentUser.id
         deal["status"] = "New"
         deal["assetRating"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
+        deal["assetClass"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
+        deal["subscription"] = 0
         deal["syndicateId"] = UUID.randomUUID().toString()
         deal["createdAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
         deal["updatedAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
@@ -77,7 +79,7 @@ class DealController {
 
         if (subscriptionDetails["userId"].asString.isNotEmpty() &&
             subscriptionDetails["subscriptionAmount"].isJsonPrimitive) {
-            val deal = dealRepository.findOneByUuid(dealId)
+            val deal = dealRepository.findOneById(dealId)
 
             // Update syndicate
             val syndicate = syndicateRepository.findOneById(deal.syndicateId)
@@ -86,6 +88,9 @@ class DealController {
                     subscriptionDetails["subscriptionAmount"].asFloat
             syndicateRepository.save(syndicate)
 
+
+            deal.subscription = deal.subscription + subscriptionDetails["subscriptionAmount"].asInt
+            dealRepository.save(deal)
             // TODO: Check if goal amount of deal is reached, modify deal to be of Open status
 
             return ResponseEntity(HttpStatus.OK)
