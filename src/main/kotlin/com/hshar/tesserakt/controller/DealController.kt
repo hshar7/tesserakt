@@ -7,20 +7,18 @@ import com.google.gson.JsonObject
 import com.hshar.tesserakt.model.Deal
 import com.hshar.tesserakt.model.Syndicate
 import com.hshar.tesserakt.repository.DealRepository
-import com.hshar.tesserakt.repository.Deals
 import com.hshar.tesserakt.repository.SyndicateRepository
+import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.websocket.server.PathParam
-import kotlin.NoSuchElementException
 
 @RestController
 @RequestMapping("/api")
@@ -32,44 +30,65 @@ class DealController {
     lateinit var syndicateRepository: SyndicateRepository
 
     @Autowired
-    lateinit var deals: Deals
+    lateinit var userRepository: UserRepository
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
-    fun getDeal(@PathVariable id: String): String {
-        return deals.findOneById(id).toString()
+    fun getDeal(@PathVariable id: String): Deal {
+        return dealRepository.findOneById(id)
     }
 
     @GetMapping("/deals-by-status")
     @PreAuthorize("hasRole('USER')")
-    fun getDealsByStatus(@PathParam(value = "status") status: String): String {
-        return deals.getDealsByStatus(status).toString()
+    fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
+        return dealRepository.findByStatus(status)
     }
+//
+//    @GetMapping("/open-deals-by-userId")
+//    @PreAuthorize("hasRole('USER')")
+//    fun getOpenDealsByUserId(@PathParam(value = "userId") userId: String): String {
+//        return deals.getOpenDealsByUserId(userId).toString()
+//    }
 
     @PostMapping("/deal")
     @PreAuthorize("hasRole('USER')")
     fun createDeal(@RequestBody body: String, @CurrentUser currentUser: UserPrincipal): Deal {
         val deal = Gson().fromJson<JsonObject>(body)
 
-        deal["id"] = UUID.randomUUID().toString()
-        deal["underwriterId"] = currentUser.id
-        deal["status"] = "New"
+        val user = userRepository.findByUsername(currentUser.username)
+            .orElseThrow { UsernameNotFoundException("Username ${currentUser.username}") }
+
         deal["assetRating"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
         deal["assetClass"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
-        deal["subscription"] = 0
-        deal["syndicateId"] = UUID.randomUUID().toString()
-        deal["createdAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
-        deal["updatedAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
 
-        syndicateRepository.insert(Syndicate(
-            deal["syndicateId"].asString,
+        val syndicate = syndicateRepository.insert(Syndicate(
+            UUID.randomUUID().toString(),
             deal["syndicateName"].asString,
-            mutableMapOf(Pair(currentUser.id, 0.toFloat()))
+            mutableMapOf(Pair(currentUser.id, deal["underwriterAmount"].asFloat))
         ))
+
+        val theRealDeal = Deal(
+            UUID.randomUUID().toString(),
+            user,
+            deal["borrowerName"].asString,
+            deal["borrowerDescription"].asString,
+            deal["underwriterAmount"].asFloat,
+            deal["jurisdiction"].asString,
+            deal["capitalAmount"].asFloat,
+            deal["interestRate"].asFloat,
+            deal["loanType"].asString,
+            deal["maturity"].asInt,
+            deal["assetClass"].asString,
+            deal["assetRating"].asString,
+            syndicate,
+            "New",
+            Date(),
+            Date()
+        )
 
         // TODO: Run Async task to check this deal against all lender matching criteria. Kafka?
 
-        return dealRepository.insert(Gson().fromJson<Deal>(deal))
+        return dealRepository.insert(theRealDeal)
     }
 
     @PutMapping("/deal/{dealId}")
@@ -82,14 +101,15 @@ class DealController {
             val deal = dealRepository.findOneById(dealId)
 
             // Update syndicate
-            val syndicate = syndicateRepository.findOneById(deal.syndicateId)
-                    .orElseThrow{ NoSuchElementException("Syndicate cannot be found ${deal.syndicateId}") }
+            val syndicate = deal.syndicate
+
             syndicate.members[subscriptionDetails["userId"].asString] =
                     subscriptionDetails["subscriptionAmount"].asFloat
             syndicateRepository.save(syndicate)
 
-
-            deal.subscription = deal.subscription + subscriptionDetails["subscriptionAmount"].asInt
+            var totalSubscription = 0.0.toFloat()
+            syndicate.members.forEach { (_, contribution) -> totalSubscription += contribution }
+            deal.subscription = totalSubscription
             dealRepository.save(deal)
             // TODO: Check if goal amount of deal is reached, modify deal to be of Open status
 
