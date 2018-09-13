@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.hshar.tesserakt.model.Deal
 import com.hshar.tesserakt.model.Syndicate
+import com.hshar.tesserakt.model.SyndicateMember
 import com.hshar.tesserakt.repository.DealRepository
 import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
@@ -56,7 +57,7 @@ class DealController {
         val deal = Gson().fromJson<JsonObject>(body)
 
         val user = userRepository.findByUsername(currentUser.username)
-            .orElseThrow { UsernameNotFoundException("Username ${currentUser.username}") }
+            .orElseThrow { UsernameNotFoundException("Username ${currentUser.username} not found.") }
 
         deal["assetRating"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
         deal["assetClass"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
@@ -64,7 +65,7 @@ class DealController {
         val syndicate = syndicateRepository.insert(Syndicate(
             UUID.randomUUID().toString(),
             deal["syndicateName"].asString,
-            mutableMapOf(Pair(currentUser.id, deal["underwriterAmount"].asFloat))
+            mutableListOf(SyndicateMember(UUID.randomUUID().toString(), user, deal["underwriterAmount"].asFloat))
         ))
 
         val theRealDeal = Deal(
@@ -103,12 +104,15 @@ class DealController {
             // Update syndicate
             val syndicate = deal.syndicate
 
-            syndicate.members[subscriptionDetails["userId"].asString] =
-                    subscriptionDetails["subscriptionAmount"].asFloat
+            val user = userRepository.findById(subscriptionDetails["userId"].asString)
+                .orElseThrow { UsernameNotFoundException("${subscriptionDetails["userId"].asString} not found.") }
+
+            syndicate.members.add(
+                SyndicateMember(UUID.randomUUID().toString(), user, subscriptionDetails["subscriptionAmount"].asFloat))
             syndicateRepository.save(syndicate)
 
             var totalSubscription = 0.0.toFloat()
-            syndicate.members.forEach { (_, contribution) -> totalSubscription += contribution }
+            syndicate.members.forEach { (_, _, contribution) -> totalSubscription += contribution }
             deal.subscription = totalSubscription
             dealRepository.save(deal)
             // TODO: Check if goal amount of deal is reached, modify deal to be of Open status
