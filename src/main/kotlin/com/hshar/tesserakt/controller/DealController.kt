@@ -44,12 +44,22 @@ class DealController {
     fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
         return dealRepository.findByStatus(status)
     }
-//
-//    @GetMapping("/open-deals-by-userId")
-//    @PreAuthorize("hasRole('USER')")
-//    fun getOpenDealsByUserId(@PathParam(value = "userId") userId: String): String {
-//        return deals.getOpenDealsByUserId(userId).toString()
-//    }
+
+    @GetMapping("/my-open-deals")
+    @PreAuthorize("hasRole('USER')")
+    fun getOpenDealsByUserId(@CurrentUser currentUser: UserPrincipal): List<Deal> {
+        val user = userRepository.findByUsername(currentUser.username)
+            .orElseThrow{ UsernameNotFoundException("{${currentUser.username} not found.")}
+
+        val deals = mutableListOf<Deal>()
+        dealRepository.findByStatusIn(listOf("New", "Open")).forEach{
+            if (it.syndicate.members.filter { it.user.id == user.id }.isNotEmpty()) {
+                deals.add(it)
+            }
+        }
+
+        return deals
+    }
 
     @PostMapping("/deal")
     @PreAuthorize("hasRole('USER')")
@@ -114,8 +124,12 @@ class DealController {
             var totalSubscription = 0.0.toFloat()
             syndicate.members.forEach { (_, _, contribution) -> totalSubscription += contribution }
             deal.subscription = totalSubscription
+
+            if (deal.subscription >= deal.capitalAmount) {
+                deal.status = "Open"
+            }
+
             dealRepository.save(deal)
-            // TODO: Check if goal amount of deal is reached, modify deal to be of Open status
 
             return ResponseEntity(HttpStatus.OK)
         }
