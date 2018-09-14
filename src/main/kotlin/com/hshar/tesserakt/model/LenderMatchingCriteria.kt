@@ -6,12 +6,12 @@ import java.util.*
 @Document(collection="lender_matching_criteria")
 data class LenderMatchingCriteria(
         val id: String,
-        var jurisdiction: String?,
+        var jurisdiction: String,
         var capitalAmount: Int,
         var interestRate: Float,
-        var loanType: String?,
-        var maturity: Int?,
-        var assetClass: String?,
+        var loanType: String,
+        var maturity: Int,
+        var assetClass: String,
         var assetRating: List<String>,
         var createdAt: Date,
         var updatedAt: Date

@@ -6,5 +6,5 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class Syndicate (
         val id: String,
         var name: String,
-        var members: MutableMap<String, Float>
+        var members: MutableList<SyndicateMember>
 )
