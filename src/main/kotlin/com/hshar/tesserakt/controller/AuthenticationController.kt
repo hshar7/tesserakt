@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.*
 import javax.validation.Valid
 import com.hshar.tesserakt.Exception.AppException
-import com.hshar.tesserakt.model.RoleName
+import com.hshar.tesserakt.type.RoleName
 import com.hshar.tesserakt.model.Role
 import com.hshar.tesserakt.repository.RoleRepository
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder

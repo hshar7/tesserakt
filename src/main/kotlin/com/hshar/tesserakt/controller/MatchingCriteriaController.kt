@@ -1,39 +1,100 @@
 package com.hshar.tesserakt.controller
 
 import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.hshar.tesserakt.model.LenderMatchingCriteria
-import com.hshar.tesserakt.repository.LenderMatchingCriteriaRepository
+import com.hshar.tesserakt.model.MatchingCriteria
+import com.hshar.tesserakt.repository.MatchingCriteriaRepository
+import com.hshar.tesserakt.repository.UserRepository
+import com.hshar.tesserakt.security.CurrentUser
+import com.hshar.tesserakt.security.UserPrincipal
+import com.hshar.tesserakt.type.AssetClass
+import com.hshar.tesserakt.type.AssetRating
+import com.hshar.tesserakt.type.Jurisdiction
+import com.hshar.tesserakt.type.LoanType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 @RestController
 @RequestMapping("/api")
 class MatchingCriteriaController {
     @Autowired
-    lateinit var lenderMatchingCriteriaRepository: LenderMatchingCriteriaRepository
+    lateinit var matchingCriteriaRepository: MatchingCriteriaRepository
+
+    @Autowired
+    lateinit var userRepository: UserRepository
 
     @GetMapping("/matchingCriteria/{id}")
     @PreAuthorize("hasRole('USER')")
-    fun getMatchingCriteria(@PathVariable id: String): LenderMatchingCriteria {
-        return lenderMatchingCriteriaRepository.findOneById(id)
+    fun getMatchingCriteria(@PathVariable id: String): MatchingCriteria {
+        return matchingCriteriaRepository.findOneById(id)
     }
 
     @PostMapping("/matchingCriteria")
     @PreAuthorize("hasRole('USER')")
-    fun createMatchingCriteria(@RequestBody body: String): LenderMatchingCriteria {
-        val matchingCriteria = Gson().fromJson<JsonObject>(body)
+    fun createMatchingCriteria(@RequestBody body: String, @CurrentUser userDetails: UserPrincipal): MatchingCriteria {
+        val matchingCriteriaBody = Gson().fromJson<JsonObject>(body)
+        val user = userRepository.findByUsername(userDetails.username)
+            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
 
-        matchingCriteria["id"] = UUID.randomUUID().toString()
-        matchingCriteria["createdAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
-        matchingCriteria["updatedAt"] = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+        var jurisdictionList = mutableListOf<Jurisdiction>()
+        if (matchingCriteriaBody["jurisdiction"].asString == "ANY") {
+            jurisdictionList = jurisdictionList.plus(Jurisdiction.values()).toMutableList()
+        } else {
+            Jurisdiction.values().forEach {
+                if (it.name == matchingCriteriaBody["jurisdiction"].asString) {
+                    jurisdictionList.add(it)
+                }
+            }
+        }
 
-        return lenderMatchingCriteriaRepository.insert(Gson().fromJson<LenderMatchingCriteria>(matchingCriteria))
+        var loanTypeList = mutableListOf<LoanType>()
+        if (matchingCriteriaBody["loanType"].asString == "ANY") {
+            loanTypeList = loanTypeList.plus(LoanType.values()).toMutableList()
+        } else {
+            LoanType.values().forEach {
+                if (it.name == matchingCriteriaBody["loanType"].asString) {
+                    loanTypeList.add(it)
+                }
+            }
+        }
+
+        var assetClassList = mutableListOf<AssetClass>()
+        if (matchingCriteriaBody["assetClass"].asString == "ANY") {
+            assetClassList = assetClassList.plus(AssetClass.values()).toMutableList()
+        } else {
+            AssetClass.values().forEach {
+                if (it.name == matchingCriteriaBody["assetClass"].asString) {
+                    assetClassList.add(it)
+                }
+            }
+        }
+
+        val assetRatingList = mutableListOf<AssetRating>()
+        matchingCriteriaBody["assetRating"].asJsonArray.forEach {
+           assetRatingList.add(AssetRating.valueOf(it.asString))
+        }
+
+        val matchingCriteria = MatchingCriteria(
+            UUID.randomUUID().toString(),
+            user,
+            jurisdictionList,
+            matchingCriteriaBody["capitalAmount"].asJsonArray[0].asFloat,
+            matchingCriteriaBody["capitalAmount"].asJsonArray[1].asFloat,
+            matchingCriteriaBody["interestRate"].asJsonArray[0].asFloat,
+            matchingCriteriaBody["interestRate"].asJsonArray[1].asFloat,
+            loanTypeList,
+            matchingCriteriaBody["maturity"].asJsonArray[0].asInt,
+            matchingCriteriaBody["maturity"].asJsonArray[1].asInt,
+            assetClassList,
+            assetRatingList,
+            Date(),
+            Date()
+        )
+
+        return matchingCriteriaRepository.insert(matchingCriteria)
     }
 }

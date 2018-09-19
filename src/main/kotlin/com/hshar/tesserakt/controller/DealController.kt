@@ -12,6 +12,7 @@ import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
+import com.hshar.tesserakt.type.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,6 +21,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import javax.websocket.server.PathParam
+import org.springframework.kafka.core.KafkaTemplate
+
+
 
 @RestController
 @RequestMapping("/api")
@@ -33,6 +37,9 @@ class DealController {
     @Autowired
     lateinit var userRepository: UserRepository
 
+    @Autowired
+    lateinit var kafkaTemplate: KafkaTemplate<String, String>
+
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
     fun getDeal(@PathVariable id: String): Deal {
@@ -42,7 +49,7 @@ class DealController {
     @GetMapping("/deals-by-status")
     @PreAuthorize("hasRole('USER')")
     fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
-        return dealRepository.findByStatus(status)
+        return dealRepository.findByStatus(Status.valueOf(status))
     }
 
     @GetMapping("/my-open-deals")
@@ -52,7 +59,7 @@ class DealController {
             .orElseThrow{ UsernameNotFoundException("{${currentUser.username} not found.")}
 
         val deals = mutableListOf<Deal>()
-        dealRepository.findByStatusIn(listOf("New", "Open")).forEach{
+        dealRepository.findByStatusIn(listOf(Status.NEW, Status.OPEN)).forEach{
             if (it.syndicate.members.filter { it.user.id == user.id }.isNotEmpty()) {
                 deals.add(it)
             }
@@ -69,8 +76,8 @@ class DealController {
         val user = userRepository.findByUsername(currentUser.username)
             .orElseThrow { UsernameNotFoundException("Username ${currentUser.username} not found.") }
 
-        deal["assetRating"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
-        deal["assetClass"] = "Not Rated" // TODO: Remove this after Rating Agency is implemented
+        deal["assetRating"] = "NotRated" // TODO: Remove this after Rating Agency is implemented
+        deal["assetClass"] = "NotRated" // TODO: Remove this after Rating Agency is implemented
 
         val syndicate = syndicateRepository.insert(Syndicate(
             UUID.randomUUID().toString(),
@@ -84,20 +91,20 @@ class DealController {
             deal["borrowerName"].asString,
             deal["borrowerDescription"].asString,
             deal["underwriterAmount"].asFloat,
-            deal["jurisdiction"].asString,
+            Jurisdiction.valueOf(deal["jurisdiction"].asString),
             deal["capitalAmount"].asFloat,
             deal["interestRate"].asFloat,
-            deal["loanType"].asString,
+            LoanType.valueOf(deal["loanType"].asString),
             deal["maturity"].asInt,
-            deal["assetClass"].asString,
-            deal["assetRating"].asString,
+            AssetClass.valueOf(deal["assetClass"].asString),
+            AssetRating.valueOf(deal["assetRating"].asString),
             syndicate,
-            "New",
+            Status.NEW,
             Date(),
             Date()
         )
 
-        // TODO: Run Async task to check this deal against all lender matching criteria. Kafka?
+        kafkaTemplate.send("mytopic", Gson().toJson(theRealDeal))
 
         return dealRepository.insert(theRealDeal)
     }
@@ -126,7 +133,7 @@ class DealController {
             deal.subscription = totalSubscription
 
             if (deal.subscription >= deal.capitalAmount) {
-                deal.status = "Open"
+                deal.status = Status.OPEN
             }
 
             dealRepository.save(deal)
