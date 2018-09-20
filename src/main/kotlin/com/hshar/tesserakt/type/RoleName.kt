@@ -1,4 +1,4 @@
-package com.hshar.tesserakt.model
+package com.hshar.tesserakt.type
 
 enum class RoleName {
     ROLE_USER,
