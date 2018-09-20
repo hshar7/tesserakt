@@ -2,18 +2,29 @@ package com.hshar.tesserakt.service
 
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
+import com.hshar.tesserakt.Exception.ResourceNotFoundException
 import com.hshar.tesserakt.model.Deal
 import com.hshar.tesserakt.model.MatchingCriteria
-import com.hshar.tesserakt.model.User
+import com.hshar.tesserakt.model.Notification
+import com.hshar.tesserakt.repository.NotificationRepository
+import com.hshar.tesserakt.repository.UserRepository
 import com.mongodb.DBRef
 import org.litote.kmongo.*
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class DealMatcher {
 
-    @KafkaListener(topics = ["mytopic"], groupId = "mygroup")
+    @Autowired
+    lateinit var notificationRepository: NotificationRepository
+
+    @Autowired
+    lateinit var userRepository: UserRepository
+
+    @KafkaListener(topics = ["streaming.deals.newDeals"], groupId = "tesserakt")
     fun listen(message: String) {
 
         val client = KMongo.createClient()
@@ -31,10 +42,20 @@ class DealMatcher {
             MatchingCriteria::maturityMin lte deal.maturity,
             MatchingCriteria::maturityMax gte deal.maturity
         )
-        println("deal: " + deal.toString())
+
         matchingCriterias.forEach {
             if ((it["user"] as DBRef).id != deal.underwriter.id) {
-                println(it.toString())
+
+                val user = userRepository.findById((it["user"] as DBRef).id.toString())
+                    .orElseThrow { ResourceNotFoundException("User", "id", (it["user"] as DBRef).id) }
+
+                notificationRepository.insert(Notification(
+                    UUID.randomUUID().toString(),
+                    user,
+                    "New deal matching your criteria",
+                    "/market/${deal.id}",
+                    Date()
+                ))
             }
         }
     }

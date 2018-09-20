@@ -23,8 +23,6 @@ import java.util.*
 import javax.websocket.server.PathParam
 import org.springframework.kafka.core.KafkaTemplate
 
-
-
 @RestController
 @RequestMapping("/api")
 class DealController {
@@ -104,7 +102,7 @@ class DealController {
             Date()
         )
 
-        kafkaTemplate.send("mytopic", Gson().toJson(theRealDeal))
+        kafkaTemplate.send("streaming.deals.newDeals", Gson().toJson(theRealDeal))
 
         return dealRepository.insert(theRealDeal)
     }
