@@ -33,6 +33,17 @@ class MatchingCriteriaController {
         return matchingCriteriaRepository.findOneById(id)
     }
 
+
+    @GetMapping("/matchingCriteria")
+    @PreAuthorize("hasRole('USER')")
+    fun getMyMatchingCriteria(@CurrentUser userDetails: UserPrincipal): List<MatchingCriteria> {
+
+        val user = userRepository.findByUsername(userDetails.username)
+            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
+
+        return matchingCriteriaRepository.findByUser(user)
+    }
+
     @PostMapping("/matchingCriteria")
     @PreAuthorize("hasRole('USER')")
     fun createMatchingCriteria(@RequestBody body: String, @CurrentUser userDetails: UserPrincipal): MatchingCriteria {

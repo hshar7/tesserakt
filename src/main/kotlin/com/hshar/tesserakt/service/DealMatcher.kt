@@ -9,8 +9,10 @@ import com.hshar.tesserakt.model.Notification
 import com.hshar.tesserakt.repository.NotificationRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.mongodb.DBRef
+import com.mongodb.MongoClientURI
 import org.litote.kmongo.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
 import java.util.*
@@ -24,10 +26,13 @@ class DealMatcher {
     @Autowired
     lateinit var userRepository: UserRepository
 
+    @Value("\${spring.data.mongodb.uri}")
+    lateinit var mongoUrl: String
+
     @KafkaListener(topics = ["streaming.deals.newDeals"], groupId = "tesserakt")
     fun listen(message: String) {
 
-        val client = KMongo.createClient()
+        val client = KMongo.createClient(MongoClientURI(mongoUrl))
         val database = client.getDatabase("tesserakt")
         val col = database.getCollection("matching_criteria")
         val deal = Gson().fromJson<Deal>(message)
