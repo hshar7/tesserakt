@@ -3,6 +3,7 @@ package com.hshar.tesserakt.service
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
 import com.hshar.tesserakt.Exception.ResourceNotFoundException
+import com.hshar.tesserakt.config.KmongoConfig
 import com.hshar.tesserakt.model.Deal
 import com.hshar.tesserakt.model.MatchingCriteria
 import com.hshar.tesserakt.model.Notification
@@ -26,15 +27,13 @@ class DealMatcher {
     @Autowired
     lateinit var userRepository: UserRepository
 
-    @Value("\${spring.data.mongodb.uri}")
-    lateinit var mongoUrl: String
+    @Autowired
+    lateinit var kmongoConfig: KmongoConfig
 
     @KafkaListener(topics = ["streaming.deals.newDeals"], groupId = "tesserakt")
     fun listen(message: String) {
 
-        val client = KMongo.createClient(MongoClientURI(mongoUrl))
-        val database = client.getDatabase("tesserakt")
-        val col = database.getCollection("matching_criteria")
+        val col = kmongoConfig.KmongoDb().getCollection("matching_criteria")
         val deal = Gson().fromJson<Deal>(message)
 
         val matchingCriterias = col.find(

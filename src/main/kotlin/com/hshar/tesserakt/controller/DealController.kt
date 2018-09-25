@@ -123,7 +123,8 @@ class DealController {
                 .orElseThrow { UsernameNotFoundException("${subscriptionDetails["userId"].asString} not found.") }
 
             syndicate.members.add(
-                SyndicateMember(UUID.randomUUID().toString(), user, subscriptionDetails["subscriptionAmount"].asFloat))
+                SyndicateMember(UUID.randomUUID().toString(), user, subscriptionDetails["subscriptionAmount"].asFloat)
+            )
             syndicateRepository.save(syndicate)
 
             var totalSubscription = 0.0.toFloat()
