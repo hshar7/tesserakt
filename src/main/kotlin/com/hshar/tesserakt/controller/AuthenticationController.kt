@@ -14,16 +14,15 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
 import java.util.*
 import javax.validation.Valid
 import com.hshar.tesserakt.Exception.AppException
 import com.hshar.tesserakt.type.RoleName
 import com.hshar.tesserakt.model.Role
+import com.hshar.tesserakt.model.SignUpToken
 import com.hshar.tesserakt.repository.RoleRepository
+import com.hshar.tesserakt.repository.SignUpTokenRepository
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 
@@ -45,6 +44,9 @@ class AuthenticationController {
     @Autowired
     lateinit var jwtTokenProvider: JwtTokenProvider
 
+    @Autowired
+    lateinit var signUpTokenRepository: SignUpTokenRepository
+
     @PostMapping("/signin")
     fun authenticateUser(@Valid @RequestBody loginRequest: LoginRequest): ResponseEntity<JwtAuthenticationResponse> {
         val authentication = authenticationManager.authenticate(
@@ -57,8 +59,24 @@ class AuthenticationController {
         return ResponseEntity.ok(JwtAuthenticationResponse(jwt))
     }
 
+    // TODO: Make this accessable to admin user only!
+    @GetMapping("/signupToken")
+    fun generateSignUpToken(@RequestParam(value = "email")  email: String): SignUpToken {
+        return signUpTokenRepository.insert(
+            SignUpToken(email, UUID.randomUUID().toString().replace("-", ""), Date())
+        )
+    }
+
     @PostMapping("/signup")
     fun registerUser(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<ApiResponse> {
+
+        if (!signUpTokenRepository.existsByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken)) {
+            return ResponseEntity(
+                ApiResponse(false, "Token invalid or expired!"),
+                HttpStatus.BAD_REQUEST
+            )
+        }
+
         if (userRepository.existsByUsername(signUpRequest.username)) {
             return ResponseEntity(
                     ApiResponse(false, "Username is already taken!"),
