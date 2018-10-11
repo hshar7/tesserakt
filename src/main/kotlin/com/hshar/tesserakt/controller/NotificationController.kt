@@ -7,7 +7,6 @@ import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -26,7 +25,6 @@ class NotificationController {
     fun getIHaveNotifications(@CurrentUser userDetails: UserPrincipal): Boolean {
 
         val user = userRepository.findByUsername(userDetails.username)
-            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
 
         return notificationRepository.existsByUser(user)
     }
@@ -35,7 +33,6 @@ class NotificationController {
     @PreAuthorize("hasRole('USER')")
     fun getMyNotifications(@CurrentUser userDetails: UserPrincipal): List<Notification> {
         val user = userRepository.findByUsername(userDetails.username)
-            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
 
         return notificationRepository.findByUser(user)
     }

@@ -24,5 +24,9 @@ data class SignUpRequest(
 
     @NotBlank
     @get:Size(min = 3, max = 20)
-    var organizationName: String
+    var organizationName: String,
+
+    @NotBlank
+    @get:Size(min = 32, max = 32)
+    var signUpToken: String
 )

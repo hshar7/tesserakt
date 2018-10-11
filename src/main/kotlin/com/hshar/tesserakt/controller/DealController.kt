@@ -4,10 +4,9 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.hshar.tesserakt.model.Deal
-import com.hshar.tesserakt.model.Syndicate
-import com.hshar.tesserakt.model.SyndicateMember
+import com.hshar.tesserakt.model.*
 import com.hshar.tesserakt.repository.DealRepository
+import com.hshar.tesserakt.repository.NotificationRepository
 import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
@@ -38,6 +37,9 @@ class DealController {
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, String>
 
+    @Autowired
+    lateinit var notificationRepository: NotificationRepository
+
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
     fun getDeal(@PathVariable id: String): Deal {
@@ -54,7 +56,6 @@ class DealController {
     @PreAuthorize("hasRole('USER')")
     fun getOpenDealsByUserId(@CurrentUser currentUser: UserPrincipal): List<Deal> {
         val user = userRepository.findByUsername(currentUser.username)
-            .orElseThrow{ UsernameNotFoundException("{${currentUser.username} not found.")}
 
         val deals = mutableListOf<Deal>()
         dealRepository.findByStatusIn(listOf(Status.NEW, Status.OPEN)).forEach{
@@ -72,7 +73,6 @@ class DealController {
         val deal = Gson().fromJson<JsonObject>(body)
 
         val user = userRepository.findByUsername(currentUser.username)
-            .orElseThrow { UsernameNotFoundException("Username ${currentUser.username} not found.") }
 
         deal["assetRating"] = "NotRated" // TODO: Remove this after Rating Agency is implemented
         deal["assetClass"] = "NotRated" // TODO: Remove this after Rating Agency is implemented
@@ -146,5 +146,22 @@ class DealController {
     @PreAuthorize("hasRole('USER')")
     fun getAllDeals(): List<Deal> {
         return dealRepository.findAll()
+    }
+
+    @PostMapping("/deal/{dealId}/invite")
+    @PreAuthorize("hasRole('USER')")
+    fun inviteToDeal(@PathVariable dealId: String, @PathParam("email") email: String): ResponseEntity<String> {
+
+        val user = userRepository.findByEmail(email)
+
+        notificationRepository.insert(Notification(
+            UUID.randomUUID().toString(),
+            user,
+            "You've been invited to participate in a new deal.",
+            "/market/$dealId",
+            Date()
+        ))
+
+        return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
     }
 }
