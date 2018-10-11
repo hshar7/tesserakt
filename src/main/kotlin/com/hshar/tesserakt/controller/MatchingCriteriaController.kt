@@ -14,7 +14,6 @@ import com.hshar.tesserakt.type.Jurisdiction
 import com.hshar.tesserakt.type.LoanType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -39,7 +38,6 @@ class MatchingCriteriaController {
     fun getMyMatchingCriteria(@CurrentUser userDetails: UserPrincipal): List<MatchingCriteria> {
 
         val user = userRepository.findByUsername(userDetails.username)
-            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
 
         return matchingCriteriaRepository.findByUser(user)
     }
@@ -49,7 +47,6 @@ class MatchingCriteriaController {
     fun createMatchingCriteria(@RequestBody body: String, @CurrentUser userDetails: UserPrincipal): MatchingCriteria {
         val matchingCriteriaBody = Gson().fromJson<JsonObject>(body)
         val user = userRepository.findByUsername(userDetails.username)
-            .orElseThrow { UsernameNotFoundException("Not found ${userDetails.username}") }
 
         var jurisdictionList = mutableListOf<Jurisdiction>()
         if (matchingCriteriaBody["jurisdiction"].asString == "ANY") {
