@@ -6,5 +6,6 @@ data class SyndicateMember (
     val id: String,
     @DBRef
     val user: User,
-    var contribution: Float
+    var contribution: Float,
+    var ready: Boolean = false
 )
