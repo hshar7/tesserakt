@@ -11,6 +11,7 @@ import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
+import com.hshar.tesserakt.service.Web3jService
 import com.hshar.tesserakt.type.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -40,6 +41,9 @@ class DealController {
 
     @Autowired
     lateinit var notificationRepository: NotificationRepository
+
+    @Autowired
+    lateinit var web3jService: Web3jService
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasRole('USER')")
@@ -103,6 +107,22 @@ class DealController {
             Date()
         )
 
+        web3jService.loadDealLedgerContract().addDeal(
+            theRealDeal.id,
+            user.id,
+            web3jService.CONTRACT_ADDRESS,
+            theRealDeal.borrowerName,
+            theRealDeal.jurisdiction.toString(),
+            theRealDeal.capitalAmount.toString(),
+            theRealDeal.interestRate.toString(),
+            theRealDeal.loanType.toString(),
+            theRealDeal.maturity.toBigInteger(),
+            theRealDeal.assetClass.toString(),
+            theRealDeal.assetRating.toString(),
+            Gson().toJson(theRealDeal.syndicate),
+            theRealDeal.status.toString()
+        ).sendAsync()
+
         kafkaTemplate.send("streaming.deals.newDeals", Gson().toJson(theRealDeal))
 
         return dealRepository.insert(theRealDeal)
@@ -127,9 +147,26 @@ class DealController {
         deal.loanType = LoanType.valueOf(dealJson["loanType"].asString)
         deal.maturity = dealJson["maturity"].asInt
 
-        // TODO: Make sure each syndicate member's ready is invalidated.
+        val syndicate = deal.syndicate
+        syndicate.members.forEach { it.ready = false }
+        syndicateRepository.save(syndicate)
 
         val updatedDeal = dealRepository.save(deal)
+
+        web3jService.loadDealLedgerContract().updateDeal(
+            deal.id,
+            deal.underwriter.id,
+            web3jService.CONTRACT_ADDRESS,
+            deal.borrowerName,
+            deal.jurisdiction.toString(),
+            deal.capitalAmount.toString(),
+            deal.interestRate.toString(),
+            deal.loanType.toString(),
+            deal.maturity.toBigInteger(),
+            deal.assetClass.toString(),
+            deal.assetRating.toString(),
+            Gson().toJson(deal.syndicate),
+            deal.status.toString()).sendAsync()
 
         return ResponseEntity(Gson().toJson(updatedDeal), HttpStatus.OK)
     }
@@ -235,9 +272,20 @@ class DealController {
         syndicateRepository.save(syndicate)
 
         var allReady = true
-        syndicate.members.forEach{ if (it.ready == false) allReady = false }
-        if (allReady)
+        syndicate.members.forEach{ if (!it.ready) allReady = false }
+        if (allReady) {
             deal.status = Status.IN_PROGRESS
+
+            syndicate.members.forEach {
+                notificationRepository.insert(Notification(
+                    UUID.randomUUID().toString(),
+                    it.user,
+                    "All members ready! Deal for ${deal.borrowerName} is live!",
+                    "/dashboard",
+                    Date()
+                ))
+            }
+        }
 
         dealRepository.save(deal)
 
