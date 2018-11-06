@@ -39,7 +39,7 @@ class FileManagementController {
     lateinit var s3AwsService: S3AwsService
 
     @PostMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun uploadFile(
         @RequestParam("filepond") file: MultipartFile,
         @PathVariable dealId: String,
@@ -60,7 +60,7 @@ class FileManagementController {
     }
 
     @GetMapping("/fileManager/{dealId}/{fileName}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun getFile(
         @PathVariable dealId: String,
         @PathVariable fileName: String,
@@ -79,7 +79,7 @@ class FileManagementController {
     }
 
     @GetMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun getFiles(
         @PathVariable dealId: String,
         @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
@@ -100,7 +100,7 @@ class FileManagementController {
     }
 
     @DeleteMapping("/fileManager/{dealId}/{filename}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun deleteFile(
         @PathVariable dealId: String,
         @PathVariable filename: String,

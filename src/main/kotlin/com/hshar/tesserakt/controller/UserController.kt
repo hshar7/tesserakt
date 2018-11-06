@@ -1,16 +1,22 @@
 package com.hshar.tesserakt.controller
 
 import com.hshar.tesserakt.Exception.ResourceNotFoundException
+import com.hshar.tesserakt.model.Role
+import com.hshar.tesserakt.model.SignUpToken
 import com.hshar.tesserakt.payload.UserIdentityAvailability
 import com.hshar.tesserakt.payload.UserProfile
 import com.hshar.tesserakt.payload.UserSummary
+import com.hshar.tesserakt.repository.RoleRepository
+import com.hshar.tesserakt.repository.SignUpTokenRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
+import com.hshar.tesserakt.type.RoleName
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/api")
@@ -18,10 +24,15 @@ class UserController {
     @Autowired
     lateinit var userRepository: UserRepository
 
+    @Autowired
+    lateinit var roleRepository: RoleRepository
+
+    @Autowired
+    lateinit var signUpTokenRepository: SignUpTokenRepository
+
     companion object: KLogging()
 
     @GetMapping("/user/me")
-    @PreAuthorize("hasRole('USER')")
     fun getCurrentUser(@CurrentUser currentUser: UserPrincipal): UserSummary {
         return UserSummary(
                 currentUser.id,
@@ -48,5 +59,23 @@ class UserController {
                 .orElseThrow{ResourceNotFoundException("User", "id", id)}
 
         return UserProfile(user.id, user.username, user.name, user.organizationName, user.email)
+    }
+
+    @PostMapping("/user/signupToken")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun generateSignUpToken(
+        @RequestParam(value = "email")  email: String,
+        @RequestParam(value = "roles")  roles: List<String>): SignUpToken {
+
+        val roleSet = mutableSetOf<Role>()
+        roles.forEach {
+            val role = roleRepository.findByName(RoleName.valueOf(it))
+                .orElseThrow { ResourceNotFoundException("Role not found", "name", it) }
+            roleSet.add(role)
+        }
+
+        return signUpTokenRepository.insert(
+            SignUpToken(email, UUID.randomUUID().toString().replace("-", ""), roleSet, Date())
+        )
     }
 }

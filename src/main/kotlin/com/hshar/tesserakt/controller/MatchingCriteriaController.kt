@@ -27,14 +27,14 @@ class MatchingCriteriaController {
     lateinit var userRepository: UserRepository
 
     @GetMapping("/matchingCriteria/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER')")
     fun getMatchingCriteria(@PathVariable id: String): MatchingCriteria {
         return matchingCriteriaRepository.findOneById(id)
     }
 
 
     @GetMapping("/matchingCriteria")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER')")
     fun getMyMatchingCriteria(@CurrentUser userDetails: UserPrincipal): List<MatchingCriteria> {
 
         val user = userRepository.findByUsername(userDetails.username)
@@ -43,7 +43,7 @@ class MatchingCriteriaController {
     }
 
     @PostMapping("/matchingCriteria")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER')")
     fun createMatchingCriteria(@RequestBody body: String, @CurrentUser userDetails: UserPrincipal): MatchingCriteria {
         val matchingCriteriaBody = Gson().fromJson<JsonObject>(body)
         val user = userRepository.findByUsername(userDetails.username)
