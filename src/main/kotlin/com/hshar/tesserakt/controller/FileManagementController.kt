@@ -39,7 +39,7 @@ class FileManagementController {
     lateinit var s3AwsService: S3AwsService
 
     @PostMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun uploadFile(
         @RequestParam("filepond") file: MultipartFile,
         @PathVariable dealId: String,
@@ -49,10 +49,12 @@ class FileManagementController {
 
         val user = userRepository.findByEmail(currUser.email)
         val deal = dealRepository.findOneById(dealId)
+        // Make sure user in syndicate.
+        if (deal.syndicate.members.none { it.user.id == currUser.id }) {
+            return ResponseEntity("{\"status\": \"not authorized\"}", HttpStatus.UNAUTHORIZED)
+        }
 
-        // TODO: Make sure user in syndicate.
         fileRepository.insert(File(fullFileName, user, deal))
-
         when (s3AwsService.putObject(fullFileName, file)) {
             true -> return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
             false -> return ResponseEntity("{\"status\": \"failed\"}", HttpStatus.INTERNAL_SERVER_ERROR)
@@ -60,7 +62,7 @@ class FileManagementController {
     }
 
     @GetMapping("/fileManager/{dealId}/{fileName}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getFile(
         @PathVariable dealId: String,
         @PathVariable fileName: String,
@@ -68,7 +70,10 @@ class FileManagementController {
 
         val fullFileName = "$dealId/$fileName"
         val deal = dealRepository.findOneById(dealId)
-        // TODO: Make sure user in syndicate.
+        // Make sure user in syndicate.
+        if (deal.syndicate.members.none { it.user.id == currUser.id }) {
+            return ResponseEntity(HttpStatus.UNAUTHORIZED)
+        }
 
         if (fileRepository.existsById(fullFileName)) {
             val content = s3AwsService.getObject(fullFileName)
@@ -79,13 +84,16 @@ class FileManagementController {
     }
 
     @GetMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getFiles(
         @PathVariable dealId: String,
         @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
-        // TODO: Make sure user in syndicate.
+        // Make sure user in syndicate.
+        if (deal.syndicate.members.none { it.user.id == currUser.id }) {
+            return ResponseEntity("{\"status\": \"not authorized\"}", HttpStatus.UNAUTHORIZED)
+        }
 
         val summaries = s3AwsService.listObjects(dealId)
         val fullFileDataList = Gson().fromJson<JsonArray>(Gson().toJson(summaries.objectSummaries))
@@ -100,7 +108,7 @@ class FileManagementController {
     }
 
     @DeleteMapping("/fileManager/{dealId}/{filename}")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun deleteFile(
         @PathVariable dealId: String,
         @PathVariable filename: String,

@@ -16,9 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 import javax.validation.Valid
-import com.hshar.tesserakt.Exception.AppException
-import com.hshar.tesserakt.type.RoleName
-import com.hshar.tesserakt.repository.RoleRepository
 import com.hshar.tesserakt.repository.SignUpTokenRepository
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -31,9 +28,6 @@ class AuthenticationController {
 
     @Autowired
     lateinit var userRepository: UserRepository
-
-    @Autowired
-    lateinit var roleRepository: RoleRepository
 
     @Autowired
     lateinit var passwordEncoder: PasswordEncoder

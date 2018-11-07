@@ -22,7 +22,7 @@ class SyndicateController {
     lateinit var userRepository: UserRepository
 
     @GetMapping("/syndicate")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getMySyndicates(@CurrentUser userDetails: UserPrincipal): List<Syndicate> {
         val user = userRepository.findByUsername(userDetails.username)
 
@@ -30,7 +30,7 @@ class SyndicateController {
     }
 
     @GetMapping("/syndicateRecommendation")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getSyndicateRecommendation(@CurrentUser userDetails: UserPrincipal): List<User> {
         val user = userRepository.findByUsername(userDetails.username)
 

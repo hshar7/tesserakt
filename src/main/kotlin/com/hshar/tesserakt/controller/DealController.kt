@@ -58,7 +58,7 @@ class DealController {
     }
 
     @GetMapping("/my-open-deals")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getOpenDealsByUserId(@CurrentUser currentUser: UserPrincipal): List<Deal> {
         val user = userRepository.findByUsername(currentUser.username)
 
