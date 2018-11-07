@@ -21,7 +21,6 @@ class NotificationController {
     lateinit var userRepository: UserRepository
 
     @GetMapping("/notification/have")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun getIHaveNotifications(@CurrentUser userDetails: UserPrincipal): Boolean {
 
         val user = userRepository.findByUsername(userDetails.username)
@@ -30,7 +29,6 @@ class NotificationController {
     }
 
     @GetMapping("/notifications")
-    @PreAuthorize("hasRole('LENDER','UNDERWRITER')")
     fun getMyNotifications(@CurrentUser userDetails: UserPrincipal): List<Notification> {
         val user = userRepository.findByUsername(userDetails.username)
 

@@ -35,11 +35,12 @@ class UserController {
     @GetMapping("/user/me")
     fun getCurrentUser(@CurrentUser currentUser: UserPrincipal): UserSummary {
         return UserSummary(
-                currentUser.id,
-                currentUser.username,
-                currentUser.name,
-                currentUser.email,
-                currentUser.organizationName
+            currentUser.id,
+            currentUser.username,
+            currentUser.name,
+            currentUser.email,
+            currentUser.organizationName,
+            currentUser.authorities
         )
     }
 

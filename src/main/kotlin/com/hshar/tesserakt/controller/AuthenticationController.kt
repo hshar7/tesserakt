@@ -80,7 +80,7 @@ class AuthenticationController {
             )
         }
 
-        val userRoles = signUpTokenRepository.findByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken).roles 
+        val userRoles = signUpTokenRepository.findByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken).roles
 
         val password = passwordEncoder.encode(signUpRequest.password)
 

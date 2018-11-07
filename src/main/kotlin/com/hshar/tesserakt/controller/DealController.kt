@@ -46,13 +46,13 @@ class DealController {
     lateinit var web3jService: Web3jService
 
     @GetMapping("/deal/{id}")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getDeal(@PathVariable id: String): Deal {
         return dealRepository.findOneById(id)
     }
 
     @GetMapping("/deals-by-status")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
         return dealRepository.findByStatus(Status.valueOf(status))
     }
@@ -260,7 +260,7 @@ class DealController {
     }
 
     @PutMapping("/deal/{dealId}/readyUp")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun subscriberReady(@PathVariable dealId: String, @CurrentUser user: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
@@ -293,13 +293,13 @@ class DealController {
     }
 
     @GetMapping("/deals")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getAllDeals(): List<Deal> {
         return dealRepository.findAll()
     }
 
     @PostMapping("/deal/{dealId}/invite")
-    @PreAuthorize("hasRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun inviteToDeal(@PathVariable dealId: String, @PathParam("email") email: String): ResponseEntity<String> {
 
         val user = userRepository.findByEmail(email)
