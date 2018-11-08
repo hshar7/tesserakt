@@ -52,7 +52,7 @@ class DealController {
     }
 
     @GetMapping("/deals-by-status")
-    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN', 'RATING_AGENCY')")
     fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
         return dealRepository.findByStatus(Status.valueOf(status))
     }
@@ -293,7 +293,7 @@ class DealController {
     }
 
     @GetMapping("/deals")
-    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
     fun getAllDeals(): List<Deal> {
         return dealRepository.findAll()
     }

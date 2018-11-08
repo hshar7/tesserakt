@@ -3,6 +3,7 @@ package com.hshar.tesserakt.controller
 import com.hshar.tesserakt.Exception.ResourceNotFoundException
 import com.hshar.tesserakt.model.Role
 import com.hshar.tesserakt.model.SignUpToken
+import com.hshar.tesserakt.model.User
 import com.hshar.tesserakt.payload.UserIdentityAvailability
 import com.hshar.tesserakt.payload.UserProfile
 import com.hshar.tesserakt.payload.UserSummary
@@ -42,6 +43,12 @@ class UserController {
             currentUser.organizationName,
             currentUser.authorities
         )
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun getCurrentUser(): List<User> {
+        return userRepository.findAll()
     }
 
     @GetMapping("/user/checkUsernameAvailability")
