@@ -8,5 +8,6 @@ data class File (
     @Id
     var fileName: String,
     val owner: User,
-    val deal: Deal
+    val deal: Deal,
+    var sensitive: Boolean = false
 )
