@@ -46,19 +46,19 @@ class DealController {
     lateinit var web3jService: Web3jService
 
     @GetMapping("/deal/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getDeal(@PathVariable id: String): Deal {
         return dealRepository.findOneById(id)
     }
 
     @GetMapping("/deals-by-status")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN', 'RATING_AGENCY')")
     fun getDealsByStatus(@PathParam(value = "status") status: String): List<Deal> {
         return dealRepository.findByStatus(Status.valueOf(status))
     }
 
     @GetMapping("/my-open-deals")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun getOpenDealsByUserId(@CurrentUser currentUser: UserPrincipal): List<Deal> {
         val user = userRepository.findByUsername(currentUser.username)
 
@@ -73,7 +73,7 @@ class DealController {
     }
 
     @PostMapping("/deal")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('UNDERWRITER')")
     fun createDeal(@RequestBody body: String, @CurrentUser currentUser: UserPrincipal): Deal {
         val deal = Gson().fromJson<JsonObject>(body)
 
@@ -129,7 +129,7 @@ class DealController {
     }
 
     @PutMapping("/deal/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('UNDERWRITER')")
     fun editDeal(@PathVariable dealId: String, @RequestBody body: String, @CurrentUser currentUser: UserPrincipal): ResponseEntity<String> {
         val dealJson = Gson().fromJson<JsonObject>(body)
 
@@ -172,7 +172,7 @@ class DealController {
     }
 
     @DeleteMapping("/deal/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('UNDERWRITER')")
     fun deleteDeal(@PathVariable dealId: String, @CurrentUser currentUser: UserPrincipal): ResponseEntity<String> {
         val deal = dealRepository.findOneById(dealId)
         if (deal.underwriter.id != currentUser.id)
@@ -183,7 +183,7 @@ class DealController {
     }
 
     @PutMapping("/deal/{dealId}/subscribe")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER')")
     fun subscribeToDeal(@PathVariable dealId: String, @RequestBody body: String): ResponseEntity<String> {
         val subscriptionDetails = Gson().fromJson<JsonObject>(body)
 
@@ -233,7 +233,7 @@ class DealController {
     }
 
     @DeleteMapping("/deal/{dealId}/subscribe")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('LENDER')")
     fun unsubscribeToDeal(@PathVariable dealId: String, @CurrentUser user: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
@@ -260,7 +260,7 @@ class DealController {
     }
 
     @PutMapping("/deal/{dealId}/readyUp")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun subscriberReady(@PathVariable dealId: String, @CurrentUser user: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
@@ -293,13 +293,13 @@ class DealController {
     }
 
     @GetMapping("/deals")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
     fun getAllDeals(): List<Deal> {
         return dealRepository.findAll()
     }
 
     @PostMapping("/deal/{dealId}/invite")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER')")
     fun inviteToDeal(@PathVariable dealId: String, @PathParam("email") email: String): ResponseEntity<String> {
 
         val user = userRepository.findByEmail(email)

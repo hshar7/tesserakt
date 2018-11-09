@@ -16,15 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 import javax.validation.Valid
-import com.hshar.tesserakt.Exception.AppException
-import com.hshar.tesserakt.type.RoleName
-import com.hshar.tesserakt.model.Role
-import com.hshar.tesserakt.model.SignUpToken
-import com.hshar.tesserakt.repository.RoleRepository
 import com.hshar.tesserakt.repository.SignUpTokenRepository
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,9 +28,6 @@ class AuthenticationController {
 
     @Autowired
     lateinit var userRepository: UserRepository
-
-    @Autowired
-    lateinit var roleRepository: RoleRepository
 
     @Autowired
     lateinit var passwordEncoder: PasswordEncoder
@@ -57,14 +48,6 @@ class AuthenticationController {
         SecurityContextHolder.getContext().authentication = authentication
         val jwt = jwtTokenProvider.generateToken(authentication)
         return ResponseEntity.ok(JwtAuthenticationResponse(jwt))
-    }
-
-    // TODO: Make this accessable to admin user only!
-    @GetMapping("/signupToken")
-    fun generateSignUpToken(@RequestParam(value = "email")  email: String): SignUpToken {
-        return signUpTokenRepository.insert(
-            SignUpToken(email, UUID.randomUUID().toString().replace("-", ""), Date())
-        )
     }
 
     @PostMapping("/signup")
@@ -91,8 +74,7 @@ class AuthenticationController {
             )
         }
 
-        val userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                .orElseThrow{AppException("User Role not set.")}
+        val userRoles = signUpTokenRepository.findByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken).roles
 
         val password = passwordEncoder.encode(signUpRequest.password)
 
@@ -103,7 +85,7 @@ class AuthenticationController {
                 signUpRequest.email,
                 signUpRequest.organizationName,
                 password,
-                Collections.singleton(userRole)
+                userRoles
         )
 
         val result = userRepository.save(user)
@@ -112,13 +94,5 @@ class AuthenticationController {
                 .fromCurrentContextPath().path("/api/users/{username}")
                 .buildAndExpand(result.username).toUri()
         return ResponseEntity.created(location).body(ApiResponse(true, "User registered successfully!"))
-    }
-
-    // TODO: Remove this, this is temporary to create roles.
-    @PostMapping("/roles")
-    fun createRole(): ResponseEntity<ApiResponse> {
-        roleRepository.insert(Role(UUID.randomUUID().toString(), RoleName.ROLE_USER))
-        roleRepository.insert(Role(UUID.randomUUID().toString(), RoleName.ROLE_ADMIN))
-        return ResponseEntity.ok(ApiResponse(true, "Two roles created!"))
     }
 }

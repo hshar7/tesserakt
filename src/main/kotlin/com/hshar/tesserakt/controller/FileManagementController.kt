@@ -13,6 +13,7 @@ import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
 import com.hshar.tesserakt.service.S3AwsService
+import com.hshar.tesserakt.type.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -39,28 +40,53 @@ class FileManagementController {
     lateinit var s3AwsService: S3AwsService
 
     @PostMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun uploadFile(
         @RequestParam("filepond") file: MultipartFile,
         @PathVariable dealId: String,
         @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
 
         val fullFileName = "$dealId/${file.originalFilename}"
-
         val user = userRepository.findByEmail(currUser.email)
         val deal = dealRepository.findOneById(dealId)
 
-        // TODO: Make sure user in syndicate.
-        fileRepository.insert(File(fullFileName, user, deal))
+        // Make sure user in syndicate.
+        if (deal.syndicate.members.none { it.user.id == currUser.id }) {
+            return ResponseEntity("{\"status\": \"not authorized\"}", HttpStatus.UNAUTHORIZED)
+        }
 
+        // If deal is in session (OPEN) then make the file sensitive
+        val sensitive = deal.status == Status.OPEN
+
+        fileRepository.insert(File(fullFileName, user, deal, sensitive))
         when (s3AwsService.putObject(fullFileName, file)) {
             true -> return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
             false -> return ResponseEntity("{\"status\": \"failed\"}", HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
+    @PostMapping("/fileManager/{dealId}/{fileName}/makeSensitive")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
+    fun makeFileSensitive(
+        @PathVariable dealId: String,
+        @PathVariable fileName: String,
+        @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
+
+        val fullFileName = "$dealId/$fileName"
+        val file = fileRepository.findOneByFileName(fullFileName)
+
+        // Make sure user is owner
+        if (file.owner.id == currUser.id) {
+            file.sensitive = true
+            fileRepository.save(file)
+            return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
+        } else {
+            return ResponseEntity("{\"status\": \"not authorized\"}", HttpStatus.UNAUTHORIZED)
+        }
+    }
+
     @GetMapping("/fileManager/{dealId}/{fileName}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getFile(
         @PathVariable dealId: String,
         @PathVariable fileName: String,
@@ -68,39 +94,52 @@ class FileManagementController {
 
         val fullFileName = "$dealId/$fileName"
         val deal = dealRepository.findOneById(dealId)
-        // TODO: Make sure user in syndicate.
+        val file = fileRepository.findOneByFileName(fullFileName)
 
-        if (fileRepository.existsById(fullFileName)) {
-            val content = s3AwsService.getObject(fullFileName)
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, fileName).body(content)
+        // Make sure user in syndicate or file is not sensitive
+        if (deal.syndicate.members.none { it.user.id == currUser.id } ||
+            !file.sensitive) {
+            return ResponseEntity(HttpStatus.UNAUTHORIZED)
         }
 
-        return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        val content = s3AwsService.getObject(fullFileName)
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, fileName).body(content)
     }
 
     @GetMapping("/fileManager/{dealId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun getFiles(
         @PathVariable dealId: String,
         @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
-        // TODO: Make sure user in syndicate.
 
         val summaries = s3AwsService.listObjects(dealId)
         val fullFileDataList = Gson().fromJson<JsonArray>(Gson().toJson(summaries.objectSummaries))
 
-        fullFileDataList.forEach {
-            val file = fileRepository.findById(it["key"].asString)
-                .orElseThrow{ ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"]) }
-            it["owner"] = Gson().toJsonTree(file.owner)
+        // If user isn't in syndicate, return only non-sensitive files.
+        if (deal.syndicate.members.none { it.user.id == currUser.id }) {
+            fullFileDataList.forEach {
+                val file = fileRepository.findById(it["key"].asString)
+                    .orElseThrow { ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"]) }
+                if (file.sensitive)
+                    fullFileDataList.remove(it) // <-- Questionable if it'll work!
+                else
+                    it["owner"] = Gson().toJsonTree(file.owner)
+            }
+        } else {
+            fullFileDataList.forEach {
+                val file = fileRepository.findById(it["key"].asString)
+                    .orElseThrow { ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"]) }
+                it["owner"] = Gson().toJsonTree(file.owner)
+                it["sensitive"] = file.sensitive
+            }
         }
-
         return ResponseEntity.ok().body(Gson().toJson(fullFileDataList))
     }
 
     @DeleteMapping("/fileManager/{dealId}/{filename}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun deleteFile(
         @PathVariable dealId: String,
         @PathVariable filename: String,

@@ -8,6 +8,7 @@ import java.util.*
 data class SignUpToken (
     val email: String,
     val token: String,
+    val roles: Set<Role>,
     @Indexed(expireAfterSeconds = 604800)
     val createdAt: Date
 )
