@@ -119,13 +119,15 @@ class FileManagementController {
 
         // If user isn't in syndicate, return only non-sensitive files.
         if (deal.syndicate.members.none { it.user.id == currUser.id }) {
-            fullFileDataList.forEach {
-                val file = fileRepository.findById(it["key"].asString)
-                    .orElseThrow { ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"]) }
+            val iterator = fullFileDataList.iterator()
+            while (iterator.hasNext()) {
+                val fileData = iterator.next()
+                val file = fileRepository.findById(fileData["key"].asString)
+                    .orElseThrow { ResourceNotFoundException("${fileData["key"]} not found in database.", "key", fileData["key"]) }
                 if (file.sensitive)
-                    fullFileDataList.remove(it) // <-- Questionable if it'll work!
+                    iterator.remove() // <-- Questionable if it'll work!
                 else
-                    it["owner"] = Gson().toJsonTree(file.owner)
+                    fileData["owner"] = Gson().toJsonTree(file.owner)
             }
         } else {
             fullFileDataList.forEach {
