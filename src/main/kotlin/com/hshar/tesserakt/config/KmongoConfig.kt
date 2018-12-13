@@ -13,10 +13,13 @@ class KmongoConfig {
     @Value("\${spring.data.mongodb.uri}")
     lateinit var mongoUrl: String
 
+    @Value("\${database.name}")
+    lateinit var databaseName: String
+
     @Bean
     fun KmongoDb(): MongoDatabase {
         val client = KMongo.createClient(MongoClientURI(mongoUrl))
-        val database = client.getDatabase("tesserakt")
+        val database = client.getDatabase(databaseName)
 
         return database
     }

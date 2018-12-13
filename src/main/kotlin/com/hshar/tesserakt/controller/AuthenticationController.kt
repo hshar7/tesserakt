@@ -55,8 +55,8 @@ class AuthenticationController {
 
         if (!signUpTokenRepository.existsByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken)) {
             return ResponseEntity(
-                ApiResponse(false, "Token invalid or expired!"),
-                HttpStatus.BAD_REQUEST
+                    ApiResponse(false, "Token invalid or expired!"),
+                    HttpStatus.BAD_REQUEST
             )
         }
 

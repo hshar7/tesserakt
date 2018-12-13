@@ -15,9 +15,9 @@ import org.mindrot.jbcrypt.BCrypt
 import com.mongodb.client.model.Filters.*
 import com.mongodb.DBRef
 
-var mongoUrl: String = System.getenv("MONGO_URL") ?: "mongodb://localhost:27017/tesserakt"
+var mongoUrl: String = "mongodb://tesserakt:123123q@ds157539.mlab.com:57539/tesserakt-test"
 val client = MongoClients.create(mongoUrl)
-val database = client.getDatabase("tesserakt")
+val database = client.getDatabase("tesserakt-test")
 val users = database.getCollection("users")
 
 var index = org.bson.Document("email", 1)
