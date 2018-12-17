@@ -91,6 +91,60 @@ class DealControllerTest {
         dealRepository.delete(deal)
     }
 
+    @Test
+    fun getAllDealsTest() {
+        val dealId = UUID.randomUUID().toString()
+        val (syndicate, deal) = createDeal(dealId)
+
+        // Sign in
+        val token = signIn()
+
+        // Get Deal
+        val newDeals = mvc.perform(
+                get("/api/deals").header("Authorization", "Bearer $token")
+        ).andExpect(status().isOk).andReturn().response.contentAsString
+
+        val newDealsJsonArray = Gson().fromJson<JsonArray>(newDeals)
+        var exists = false
+        newDealsJsonArray.forEach {
+            if (it["id"].asString == dealId) {
+                exists = true
+            }
+        }
+        Assert.assertTrue(exists)
+
+        // Clean up
+        syndicateRepository.delete(syndicate)
+        dealRepository.delete(deal)
+    }
+
+    @Test
+    fun getOpenDealsByUserIdTest() {
+        val dealId = UUID.randomUUID().toString()
+        val (syndicate, deal) = createDeal(dealId)
+
+        // Sign in
+        val token = signIn()
+
+        // Get Deal
+        val newDeals = mvc.perform(
+                get("/api/my-open-deals").header("Authorization", "Bearer $token")
+        ).andExpect(status().isOk).andReturn().response.contentAsString
+
+        val newDealsJsonArray = Gson().fromJson<JsonArray>(newDeals)
+        var exists = false
+        newDealsJsonArray.forEach {
+            if (it["id"].asString == dealId) {
+                exists = true
+            }
+        }
+        Assert.assertTrue(exists)
+
+        // Clean up
+        syndicateRepository.delete(syndicate)
+        dealRepository.delete(deal)
+    }
+
     private fun signIn(): String? {
         val responseJson = this.mvc.perform(MockMvcRequestBuilders.post("/api/auth/signin")
             .content("{\"usernameOrEmail\": \"${TESTCONSTS.permanentTestUsername}\", \"password\": \"123123q\"}")
@@ -130,7 +184,7 @@ class DealControllerTest {
             Date()
         )
 
-        // Create a deal
+        // Persist the deal
         dealRepository.insert(deal)
         return Pair(syndicate, deal)
     }

@@ -87,6 +87,12 @@ class DealController {
         return deals
     }
 
+    @GetMapping("/deals")
+    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
+    fun getAllDeals(): List<Deal> {
+        return dealRepository.findAll()
+    }
+
     @PostMapping("/deal")
     @PreAuthorize("hasRole('UNDERWRITER')")
     fun createDeal(@RequestBody body: String, @CurrentUser currentUser: UserPrincipal): Deal {
@@ -307,12 +313,6 @@ class DealController {
         dealRepository.save(deal)
 
         return ResponseEntity(Gson().toJson(user), HttpStatus.OK)
-    }
-
-    @GetMapping("/deals")
-    @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
-    fun getAllDeals(): List<Deal> {
-        return dealRepository.findAll()
     }
 
     @PostMapping("/deal/{dealId}/invite")
