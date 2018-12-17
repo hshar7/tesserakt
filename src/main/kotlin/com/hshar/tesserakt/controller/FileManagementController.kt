@@ -5,7 +5,7 @@ import com.github.salomonbrys.kotson.get
 import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonArray
-import com.hshar.tesserakt.Exception.ResourceNotFoundException
+import com.hshar.tesserakt.exception.ResourceNotFoundException
 import com.hshar.tesserakt.model.File
 import com.hshar.tesserakt.repository.DealRepository
 import com.hshar.tesserakt.repository.FileRepository
@@ -20,7 +20,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
@@ -44,7 +50,8 @@ class FileManagementController {
     fun uploadFile(
         @RequestParam("filepond") file: MultipartFile,
         @PathVariable dealId: String,
-        @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
+        @CurrentUser currUser: UserPrincipal
+    ): ResponseEntity<String> {
 
         val fullFileName = "$dealId/${file.originalFilename}"
         val user = userRepository.findByEmail(currUser.email)
@@ -70,7 +77,8 @@ class FileManagementController {
     fun makeFileSensitive(
         @PathVariable dealId: String,
         @PathVariable fileName: String,
-        @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
+        @CurrentUser currUser: UserPrincipal
+    ): ResponseEntity<String> {
 
         val fullFileName = "$dealId/$fileName"
         val file = fileRepository.findOneByFileName(fullFileName)
@@ -90,7 +98,8 @@ class FileManagementController {
     fun getFile(
         @PathVariable dealId: String,
         @PathVariable fileName: String,
-        @CurrentUser currUser: UserPrincipal): ResponseEntity<ByteArray> {
+        @CurrentUser currUser: UserPrincipal
+    ): ResponseEntity<ByteArray> {
 
         val fullFileName = "$dealId/$fileName"
         val deal = dealRepository.findOneById(dealId)
@@ -98,7 +107,7 @@ class FileManagementController {
 
         // Make sure user in syndicate or file is not sensitive
         if (deal.syndicate.members.none { it.user.id == currUser.id } ||
-            !file.sensitive) {
+                !file.sensitive) {
             return ResponseEntity(HttpStatus.UNAUTHORIZED)
         }
 
@@ -108,12 +117,9 @@ class FileManagementController {
 
     @GetMapping("/fileManager/{dealId}")
     @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
-    fun getFiles(
-        @PathVariable dealId: String,
-        @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
+    fun getFiles(@PathVariable dealId: String, @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
 
         val deal = dealRepository.findOneById(dealId)
-
         val summaries = s3AwsService.listObjects(dealId)
         val fullFileDataList = Gson().fromJson<JsonArray>(Gson().toJson(summaries.objectSummaries))
 
@@ -123,16 +129,22 @@ class FileManagementController {
             while (iterator.hasNext()) {
                 val fileData = iterator.next()
                 val file = fileRepository.findById(fileData["key"].asString)
-                    .orElseThrow { ResourceNotFoundException("${fileData["key"]} not found in database.", "key", fileData["key"]) }
+                    .orElseThrow {
+                        ResourceNotFoundException("${fileData["key"]} not found in database.", "key", fileData["key"])
+                    }
+
                 if (file.sensitive)
-                    iterator.remove() // <-- Questionable if it'll work!
+                    iterator.remove()
                 else
                     fileData["owner"] = Gson().toJsonTree(file.owner)
             }
         } else {
             fullFileDataList.forEach {
                 val file = fileRepository.findById(it["key"].asString)
-                    .orElseThrow { ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"]) }
+                    .orElseThrow {
+                        ResourceNotFoundException("${it["key"]} not found in database.", "key", it["key"])
+                    }
+
                 it["owner"] = Gson().toJsonTree(file.owner)
                 it["sensitive"] = file.sensitive
             }
@@ -145,24 +157,24 @@ class FileManagementController {
     fun deleteFile(
         @PathVariable dealId: String,
         @PathVariable filename: String,
-        @CurrentUser currUser: UserPrincipal): ResponseEntity<String> {
+        @CurrentUser currUser: UserPrincipal
+    ): ResponseEntity<String> {
 
         val fullFileName = "$dealId/$filename"
         val deal = dealRepository.findOneById(dealId)
 
         val file = fileRepository.findById(fullFileName)
-            .orElseThrow{ ResourceNotFoundException("$fullFileName not found in database.", "key", fullFileName) }
+                .orElseThrow { ResourceNotFoundException("$fullFileName not found in database.", "key", fullFileName) }
 
         // Make sure user in syndicate and (user owns the file OR user is underwriter)
         if (deal.syndicate.members.any { it.user.id == currUser.id }
-            && (file.owner.id == currUser.id || currUser.id == deal.underwriter.id)) {
+                && (file.owner.id == currUser.id || currUser.id == deal.underwriter.id)) {
 
             when (s3AwsService.deleteObject(fullFileName)) {
                 true -> fileRepository.delete(file)
                 false -> return ResponseEntity("{\"status\": \"failed\"}", HttpStatus.INTERNAL_SERVER_ERROR)
             }
             return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
-
         } else {
             return ResponseEntity("{\"status\": \"not authorized\"}", HttpStatus.UNAUTHORIZED)
         }

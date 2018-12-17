@@ -17,7 +17,7 @@ class KmongoConfig {
     lateinit var databaseName: String
 
     @Bean
-    fun KmongoDb(): MongoDatabase {
+    fun kMongoDb(): MongoDatabase {
         val client = KMongo.createClient(MongoClientURI(mongoUrl))
         val database = client.getDatabase(databaseName)
 

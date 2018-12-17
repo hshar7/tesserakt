@@ -14,33 +14,37 @@ class Web3jService {
     @Autowired
     lateinit var web3jQuorum: Web3j
 
-    val CONTRACT_ADDRESS = "0xE718dd5406B8b981A0992678002f78215bE1a1db"
+    companion object {
+        const val CONTRACT_ADDRESS = "0xE718dd5406B8b981A0992678002f78215bE1a1db"
+        const val GAS_PRICE = 200
+        const val GAS_LIMIT = 4500000
+    }
 
     fun deployDealLedgerContract() {
         val transactionManager = ClientTransactionManager(
-            web3jQuorum,
-            "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
-            null,
-            emptyList()
+                web3jQuorum,
+                "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
+                null,
+                emptyList()
         )
 
-        DealLedger.deploy(web3jQuorum, transactionManager, 200.toBigInteger(), 4500000.toBigInteger()).send()
+        DealLedger.deploy(web3jQuorum, transactionManager, GAS_PRICE.toBigInteger(), GAS_LIMIT.toBigInteger()).send()
     }
 
-    fun loadDealLedgerContract() : DealLedger {
+    fun loadDealLedgerContract(): DealLedger {
         val transactionManager = ClientTransactionManager(
-            web3jQuorum,
-            "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
-            null,
-            emptyList()
+                web3jQuorum,
+                "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
+                null,
+                emptyList()
         )
 
         return DealLedger.load(
-            CONTRACT_ADDRESS,
-            web3jQuorum,
-            transactionManager,
-            200.toBigInteger(),
-            4500000.toBigInteger()
+                CONTRACT_ADDRESS,
+                web3jQuorum,
+                transactionManager,
+                GAS_PRICE.toBigInteger(),
+                GAS_LIMIT.toBigInteger()
         )
     }
 

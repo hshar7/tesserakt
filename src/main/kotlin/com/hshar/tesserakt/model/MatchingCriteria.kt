@@ -6,9 +6,9 @@ import com.hshar.tesserakt.type.Jurisdiction
 import com.hshar.tesserakt.type.LoanType
 import org.springframework.data.mongodb.core.mapping.DBRef
 import org.springframework.data.mongodb.core.mapping.Document
-import java.util.*
+import java.util.Date
 
-@Document(collection="matching_criteria")
+@Document(collection = "matching_criteria")
 data class MatchingCriteria(
     val id: String,
     @DBRef

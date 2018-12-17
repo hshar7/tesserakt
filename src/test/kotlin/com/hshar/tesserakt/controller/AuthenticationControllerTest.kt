@@ -1,6 +1,6 @@
 package com.hshar.tesserakt.controller
 
-import com.hshar.tesserakt.Exception.ResourceNotFoundException
+import com.hshar.tesserakt.exception.ResourceNotFoundException
 import com.hshar.tesserakt.model.SignUpToken
 import com.hshar.tesserakt.repository.RoleRepository
 import com.hshar.tesserakt.repository.SignUpTokenRepository

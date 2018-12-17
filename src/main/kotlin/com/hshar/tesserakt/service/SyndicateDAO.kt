@@ -23,7 +23,7 @@ class SyndicateDAO {
     lateinit var userRepository: UserRepository
 
     fun findByMembership(user: User): List<Syndicate> {
-        val list = kmongoConfig.KmongoDb().getCollection("syndicates").find(
+        val list = kmongoConfig.kMongoDb().getCollection("syndicates").find(
             Syndicate::members elemMatch Document().append("user", DBRef("users", user.id))
         ).toList()
 
@@ -31,14 +31,14 @@ class SyndicateDAO {
     }
 
     fun findPastSyndicateMembers(user: User): List<User> {
-        val list = kmongoConfig.KmongoDb().getCollection("syndicates").find(
+        val list = kmongoConfig.kMongoDb().getCollection("syndicates").find(
             Syndicate::members elemMatch Document().append("user", DBRef("users", user.id))
         ).toList()
 
         val memberList = mutableMapOf<String, User>()
 
-        list.forEach{syndicate ->
-            (syndicate["members"] as List<Document>).forEach{member ->
+        list.forEach { syndicate ->
+            (syndicate["members"] as List<Document>).forEach { member ->
                 val userId = (member["user"] as DBRef).id.toString()
                 if (!memberList.containsKey(userId))
                     memberList[userId] = userRepository.findOneById(userId)

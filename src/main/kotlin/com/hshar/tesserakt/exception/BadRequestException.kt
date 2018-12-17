@@ -1,4 +1,4 @@
-package com.hshar.tesserakt.Exception
+package com.hshar.tesserakt.exception
 
 class BadRequestException : RuntimeException {
     constructor(message: String?) : super(message)

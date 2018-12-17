@@ -1,27 +1,25 @@
 package com.hshar.tesserakt.controller
 
 import com.github.salomonbrys.kotson.fromJson
+import com.github.salomonbrys.kotson.get
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.hshar.tesserakt.Exception.ResourceNotFoundException
 import com.hshar.tesserakt.TESTCONSTS
 import com.hshar.tesserakt.model.Deal
 import com.hshar.tesserakt.model.Syndicate
 import com.hshar.tesserakt.model.SyndicateMember
-import com.hshar.tesserakt.model.User
 import com.hshar.tesserakt.repository.DealRepository
-import com.hshar.tesserakt.repository.RoleRepository
 import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.type.*
+import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
-import org.springframework.http.RequestEntity.post
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MockMvc
@@ -50,10 +48,60 @@ class DealControllerTest {
 
     @Test
     fun getDealTest() {
-        // Constants
         val dealId = UUID.randomUUID().toString()
+        val (syndicate, deal) = createDeal(dealId)
+
+        // Sign in
+        val token = signIn()
+
+        // Get Deal
+        mvc.perform(get("/api/deal/$dealId").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+
+        // Clean up
+        syndicateRepository.delete(syndicate)
+        dealRepository.delete(deal)
+    }
+
+    @Test
+    fun getDealBySatus() {
+        val dealId = UUID.randomUUID().toString()
+        val (syndicate, deal) = createDeal(dealId)
+
+        // Sign in
+        val token = signIn()
+
+        // Get Deal
+        val status = Status.NEW.toString()
+        val newDeals = mvc.perform(
+            get("/api/deals-by-status?status=$status").header("Authorization", "Bearer $token")
+        ).andExpect(status().isOk).andReturn().response.contentAsString
+
+        val newDealsJsonArray = Gson().fromJson<JsonArray>(newDeals)
+        var exists = false
+        newDealsJsonArray.forEach {
+            if (it["id"].asString == dealId) {
+                exists = true
+            }
+        }
+        Assert.assertTrue(exists)
+
+        // Clean up
+        syndicateRepository.delete(syndicate)
+        dealRepository.delete(deal)
+    }
+
+    private fun signIn(): String? {
+        val responseJson = this.mvc.perform(MockMvcRequestBuilders.post("/api/auth/signin")
+            .content("{\"usernameOrEmail\": \"${TESTCONSTS.permanentTestUsername}\", \"password\": \"123123q\"}")
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk).andReturn().response.contentAsString
+        val token = Gson().fromJson<JsonObject>(responseJson)["accessToken"].asString
+        return token
+    }
+
+    private fun createDeal(dealId: String): Pair<Syndicate, Deal> {
         val underwriter = userRepository.findByUsernameOrEmail(
-            TESTCONSTS.permanentTestUsername, TESTCONSTS.permanentTestUsername
+                TESTCONSTS.permanentTestUsername, TESTCONSTS.permanentTestUsername
         )
         val syndicate = syndicateRepository.insert(
             Syndicate(
@@ -63,7 +111,6 @@ class DealControllerTest {
                     SyndicateMember(UUID.randomUUID().toString(), underwriter, 5000000.toFloat(), false))
             )
         )
-
         val deal = Deal(
             dealId,
             underwriter,
@@ -85,19 +132,6 @@ class DealControllerTest {
 
         // Create a deal
         dealRepository.insert(deal)
-
-        // Sign in
-        val responseJson = this.mvc.perform(MockMvcRequestBuilders.post("/api/auth/signin")
-            .content("{\"usernameOrEmail\": \"${TESTCONSTS.permanentTestUsername}\", \"password\": \"123123q\"}")
-            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk).andReturn().response.contentAsString
-        val token = Gson().fromJson<JsonObject>(responseJson)["accessToken"].asString
-
-        // Get Deal
-        mvc.perform(get("/api/deal/$dealId").header("Authorization", "Bearer $token"))
-            .andExpect(status().isOk)
-
-        // Clean up
-        syndicateRepository.delete(syndicate)
-        dealRepository.delete(deal)
+        return Pair(syndicate, deal)
     }
 }

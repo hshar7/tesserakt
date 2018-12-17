@@ -14,8 +14,14 @@ import com.hshar.tesserakt.type.Jurisdiction
 import com.hshar.tesserakt.type.LoanType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
-import java.util.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import java.util.UUID
+import java.util.Date
 
 @RestController
 @RequestMapping("/api")
@@ -32,7 +38,6 @@ class MatchingCriteriaController {
         return matchingCriteriaRepository.findOneById(id)
     }
 
-
     @GetMapping("/matchingCriteria")
     @PreAuthorize("hasRole('LENDER')")
     fun getMyMatchingCriteria(@CurrentUser userDetails: UserPrincipal): List<MatchingCriteria> {
@@ -44,6 +49,7 @@ class MatchingCriteriaController {
 
     @PostMapping("/matchingCriteria")
     @PreAuthorize("hasRole('LENDER')")
+    @Suppress("ComplexMethod")
     fun createMatchingCriteria(@RequestBody body: String, @CurrentUser userDetails: UserPrincipal): MatchingCriteria {
         val matchingCriteriaBody = Gson().fromJson<JsonObject>(body)
         val user = userRepository.findByUsername(userDetails.username)
@@ -83,7 +89,7 @@ class MatchingCriteriaController {
 
         val assetRatingList = mutableListOf<AssetRating>()
         matchingCriteriaBody["assetRating"].asJsonArray.forEach {
-           assetRatingList.add(AssetRating.valueOf(it.asString))
+            assetRatingList.add(AssetRating.valueOf(it.asString))
         }
 
         val matchingCriteria = MatchingCriteria(
