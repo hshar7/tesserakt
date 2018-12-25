@@ -1,6 +1,8 @@
 package com.hshar.tesserakt.service
 
+import com.google.gson.Gson
 import com.hshar.tesserakt.contract.DealLedger
+import com.hshar.tesserakt.model.Deal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.web3j.protocol.Web3j
@@ -31,7 +33,51 @@ class Web3jService {
         DealLedger.deploy(web3jQuorum, transactionManager, GAS_PRICE.toBigInteger(), GAS_LIMIT.toBigInteger()).send()
     }
 
-    fun loadDealLedgerContract(): DealLedger {
+    fun sendNewDealAsync(deal: Deal) {
+        loadDealLedgerContract().addDeal(
+                deal.id,
+                deal.underwriter.id,
+                Web3jService.CONTRACT_ADDRESS,
+                deal.borrowerName,
+                deal.jurisdiction.toString(),
+                deal.capitalAmount.toString(),
+                deal.interestRate.toString(),
+                deal.loanType.toString(),
+                deal.maturity.toBigInteger(),
+                deal.assetClass.toString(),
+                deal.assetRating.toString(),
+                Gson().toJson(deal.syndicate),
+                deal.status.toString()
+        ).sendAsync()
+    }
+
+    fun sendDealUpdate(deal: Deal) {
+        loadDealLedgerContract().updateDeal(
+                deal.id,
+                deal.underwriter.id,
+                Web3jService.CONTRACT_ADDRESS,
+                deal.borrowerName,
+                deal.jurisdiction.toString(),
+                deal.capitalAmount.toString(),
+                deal.interestRate.toString(),
+                deal.loanType.toString(),
+                deal.maturity.toBigInteger(),
+                deal.assetClass.toString(),
+                deal.assetRating.toString(),
+                Gson().toJson(deal.syndicate),
+                deal.status.toString()
+        ).sendAsync()
+    }
+
+    fun getDealStatus(dealId: String): String {
+        return loadDealLedgerContract().getDealStatus(dealId).send()
+    }
+
+    fun getDealSummary(dealId: String): Tuple5<String, String, String, String, BigInteger> {
+        return loadDealLedgerContract().getDealSummary(dealId).send()
+    }
+
+    private fun loadDealLedgerContract(): DealLedger {
         val transactionManager = ClientTransactionManager(
                 web3jQuorum,
                 "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
@@ -46,13 +92,5 @@ class Web3jService {
                 GAS_PRICE.toBigInteger(),
                 GAS_LIMIT.toBigInteger()
         )
-    }
-
-    fun getDealStatus(dealId: String): String {
-        return loadDealLedgerContract().getDealStatus(dealId).send()
-    }
-
-    fun getDealSummary(dealId: String): Tuple5<String, String, String, String, BigInteger> {
-        return loadDealLedgerContract().getDealSummary(dealId).send()
     }
 }

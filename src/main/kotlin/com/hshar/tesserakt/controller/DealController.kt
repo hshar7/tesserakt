@@ -14,6 +14,7 @@ import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
+import com.hshar.tesserakt.service.KafkaService
 import com.hshar.tesserakt.service.Web3jService
 import com.hshar.tesserakt.type.AssetClass
 import com.hshar.tesserakt.type.AssetRating
@@ -26,7 +27,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import javax.websocket.server.PathParam
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -52,13 +52,13 @@ class DealController {
     lateinit var userRepository: UserRepository
 
     @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String, String>
-
-    @Autowired
     lateinit var notificationRepository: NotificationRepository
 
     @Autowired
     lateinit var web3jService: Web3jService
+
+    @Autowired
+    lateinit var kafkaService: KafkaService
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
@@ -129,23 +129,8 @@ class DealController {
                 Date()
         )
 
-        web3jService.loadDealLedgerContract().addDeal(
-                theRealDeal.id,
-                user.id,
-                Web3jService.CONTRACT_ADDRESS,
-                theRealDeal.borrowerName,
-                theRealDeal.jurisdiction.toString(),
-                theRealDeal.capitalAmount.toString(),
-                theRealDeal.interestRate.toString(),
-                theRealDeal.loanType.toString(),
-                theRealDeal.maturity.toBigInteger(),
-                theRealDeal.assetClass.toString(),
-                theRealDeal.assetRating.toString(),
-                Gson().toJson(theRealDeal.syndicate),
-                theRealDeal.status.toString()
-        ).sendAsync()
-
-        kafkaTemplate.send("streaming.deals.newDeals", Gson().toJson(theRealDeal))
+        web3jService.sendNewDealAsync(theRealDeal)
+        kafkaService.sendNewDeal(theRealDeal)
 
         return dealRepository.insert(theRealDeal)
     }
@@ -176,21 +161,7 @@ class DealController {
 
         val updatedDeal = dealRepository.save(deal)
 
-        web3jService.loadDealLedgerContract().updateDeal(
-            deal.id,
-            deal.underwriter.id,
-            Web3jService.CONTRACT_ADDRESS,
-            deal.borrowerName,
-            deal.jurisdiction.toString(),
-            deal.capitalAmount.toString(),
-            deal.interestRate.toString(),
-            deal.loanType.toString(),
-            deal.maturity.toBigInteger(),
-            deal.assetClass.toString(),
-            deal.assetRating.toString(),
-            Gson().toJson(deal.syndicate),
-            deal.status.toString())
-        .sendAsync()
+        web3jService.sendDealUpdate(updatedDeal)
 
         return ResponseEntity(Gson().toJson(updatedDeal), HttpStatus.OK)
     }
@@ -202,6 +173,7 @@ class DealController {
         if (deal.underwriter.id != currentUser.id)
             return ResponseEntity(HttpStatus.UNAUTHORIZED)
 
+        syndicateRepository.delete(deal.syndicate)
         dealRepository.delete(deal)
         return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
     }
