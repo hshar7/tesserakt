@@ -1,17 +1,21 @@
 package com.hshar.tesserakt.security
 
-import io.jsonwebtoken.*
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.SignatureAlgorithm
+import io.jsonwebtoken.SignatureException
+import io.jsonwebtoken.MalformedJwtException
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.UnsupportedJwtException
 import mu.KLogging
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
-import java.util.*
-
+import java.util.Date
 
 @Component
 @ConfigurationProperties(prefix = "app")
 class JwtTokenProvider {
-    companion object: KLogging()
+    companion object : KLogging()
 
     lateinit var jwtSecret: String
 

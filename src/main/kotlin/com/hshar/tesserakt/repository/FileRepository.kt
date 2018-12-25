@@ -5,5 +5,4 @@ import org.springframework.data.mongodb.repository.MongoRepository
 
 interface FileRepository : MongoRepository<File, String> {
     fun findOneByFileName(id: String): File
-    fun findOneByFileNameAndSensitive(id: String, sensitive: Boolean): File
 }

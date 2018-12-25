@@ -1,4 +1,4 @@
-package com.hshar.tesserakt.Exception
+package com.hshar.tesserakt.exception
 
 class AppException : RuntimeException {
     constructor(message: String?, cause: Throwable?) : super(message, cause)

@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse
 
 class JwtAuthenticationFilter : OncePerRequestFilter() {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     @Autowired
     lateinit var tokenProvider: JwtTokenProvider
@@ -25,9 +25,10 @@ class JwtAuthenticationFilter : OncePerRequestFilter() {
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(
-            request: HttpServletRequest,
-            response: HttpServletResponse,
-            filterChain: FilterChain) {
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+    ) {
         try {
             val jwt = getJwtFromRequest(request)
 

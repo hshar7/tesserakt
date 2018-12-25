@@ -19,8 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.http.SessionCreationPolicy
 
-
-
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(

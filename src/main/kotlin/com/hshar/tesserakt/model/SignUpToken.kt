@@ -2,7 +2,7 @@ package com.hshar.tesserakt.model
 
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import java.util.*
+import java.util.Date
 
 @Document(collection = "signup-tokens")
 data class SignUpToken (
