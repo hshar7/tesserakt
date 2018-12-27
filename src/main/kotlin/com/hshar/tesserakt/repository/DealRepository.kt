@@ -10,4 +10,6 @@ interface DealRepository : MongoRepository<Deal, String> {
     fun findByStatus(status: Status): List<Deal>
 
     fun findByStatusIn(statuses: Collection<Status>): List<Deal>
+
+    fun findOneByBorrowerName(borrowerName: String): Deal
 }

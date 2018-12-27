@@ -1,6 +1,6 @@
 package com.hshar.tesserakt.controller
 
-import com.hshar.tesserakt.Exception.ResourceNotFoundException
+import com.hshar.tesserakt.exception.ResourceNotFoundException
 import com.hshar.tesserakt.model.Role
 import com.hshar.tesserakt.model.SignUpToken
 import com.hshar.tesserakt.model.User
@@ -16,8 +16,14 @@ import com.hshar.tesserakt.type.RoleName
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
-import java.util.*
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import java.util.UUID
+import java.util.Date
 
 @RestController
 @RequestMapping("/api")
@@ -73,7 +79,8 @@ class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     fun generateSignUpToken(
         @RequestParam(value = "email")  email: String,
-        @RequestParam(value = "roles")  roles: List<String>): SignUpToken {
+        @RequestParam(value = "roles")  roles: List<String>
+    ): SignUpToken {
 
         val roleSet = mutableSetOf<Role>()
         roles.forEach {

@@ -1,6 +1,8 @@
 package com.hshar.tesserakt.service
 
+import com.google.gson.Gson
 import com.hshar.tesserakt.contract.DealLedger
+import com.hshar.tesserakt.model.Deal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.web3j.protocol.Web3j
@@ -14,34 +16,57 @@ class Web3jService {
     @Autowired
     lateinit var web3jQuorum: Web3j
 
-    val CONTRACT_ADDRESS = "0xE718dd5406B8b981A0992678002f78215bE1a1db"
+    companion object {
+        const val CONTRACT_ADDRESS = "0xE718dd5406B8b981A0992678002f78215bE1a1db"
+        const val GAS_PRICE = 200
+        const val GAS_LIMIT = 4500000
+    }
 
     fun deployDealLedgerContract() {
         val transactionManager = ClientTransactionManager(
-            web3jQuorum,
-            "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
-            null,
-            emptyList()
+                web3jQuorum,
+                "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
+                null,
+                emptyList()
         )
 
-        DealLedger.deploy(web3jQuorum, transactionManager, 200.toBigInteger(), 4500000.toBigInteger()).send()
+        DealLedger.deploy(web3jQuorum, transactionManager, GAS_PRICE.toBigInteger(), GAS_LIMIT.toBigInteger()).send()
     }
 
-    fun loadDealLedgerContract() : DealLedger {
-        val transactionManager = ClientTransactionManager(
-            web3jQuorum,
-            "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
-            null,
-            emptyList()
-        )
+    fun sendNewDealAsync(deal: Deal) {
+        loadDealLedgerContract().addDeal(
+                deal.id,
+                deal.underwriter.id,
+                Web3jService.CONTRACT_ADDRESS,
+                deal.borrowerName,
+                deal.jurisdiction.toString(),
+                deal.capitalAmount.toString(),
+                deal.interestRate.toString(),
+                deal.loanType.toString(),
+                deal.maturity.toBigInteger(),
+                deal.assetClass.toString(),
+                deal.assetRating.toString(),
+                Gson().toJson(deal.syndicate),
+                deal.status.toString()
+        ).sendAsync()
+    }
 
-        return DealLedger.load(
-            CONTRACT_ADDRESS,
-            web3jQuorum,
-            transactionManager,
-            200.toBigInteger(),
-            4500000.toBigInteger()
-        )
+    fun sendDealUpdate(deal: Deal) {
+        loadDealLedgerContract().updateDeal(
+                deal.id,
+                deal.underwriter.id,
+                Web3jService.CONTRACT_ADDRESS,
+                deal.borrowerName,
+                deal.jurisdiction.toString(),
+                deal.capitalAmount.toString(),
+                deal.interestRate.toString(),
+                deal.loanType.toString(),
+                deal.maturity.toBigInteger(),
+                deal.assetClass.toString(),
+                deal.assetRating.toString(),
+                Gson().toJson(deal.syndicate),
+                deal.status.toString()
+        ).sendAsync()
     }
 
     fun getDealStatus(dealId: String): String {
@@ -50,5 +75,22 @@ class Web3jService {
 
     fun getDealSummary(dealId: String): Tuple5<String, String, String, String, BigInteger> {
         return loadDealLedgerContract().getDealSummary(dealId).send()
+    }
+
+    private fun loadDealLedgerContract(): DealLedger {
+        val transactionManager = ClientTransactionManager(
+                web3jQuorum,
+                "0x62c4a9d5e93aa41c4b9acfce8a6a9d634f097b73",
+                null,
+                emptyList()
+        )
+
+        return DealLedger.load(
+                CONTRACT_ADDRESS,
+                web3jQuorum,
+                transactionManager,
+                GAS_PRICE.toBigInteger(),
+                GAS_LIMIT.toBigInteger()
+        )
     }
 }

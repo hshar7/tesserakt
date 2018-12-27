@@ -9,7 +9,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.kafka.core.ConsumerFactory
-import java.util.*
+import java.util.Arrays
 
 @EnableKafka
 @Configuration

@@ -9,10 +9,14 @@ import org.web3j.quorum.Quorum
 @Configuration
 class Web3jConfig {
 
+    companion object {
+        const val KALEIDO_TOKEN = "dTBxdjdqbHF1bDpGbWVzR1N4X1gtVkRrbnFFUS1iOUZGVHhOLUEyd3M1a0hnb1ZKT19POE00"
+    }
+
     @Bean
     fun quorumWeb3jProvider(): Web3j {
         val httpService = HttpService("https://u0u7k2nevz-u0dn5c74nw-rpc.us-east-2.kaleido.io")
-        httpService.addHeader("Authorization", "Basic dTBxdjdqbHF1bDpGbWVzR1N4X1gtVkRrbnFFUS1iOUZGVHhOLUEyd3M1a0hnb1ZKT19POE00")
+        httpService.addHeader("Authorization", "Basic $KALEIDO_TOKEN")
         return Quorum.build(httpService)
     }
 }

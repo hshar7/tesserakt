@@ -14,11 +14,14 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
-import java.util.*
 import javax.validation.Valid
 import com.hshar.tesserakt.repository.SignUpTokenRepository
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/auth")
@@ -53,31 +56,31 @@ class AuthenticationController {
     @PostMapping("/signup")
     fun registerUser(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<ApiResponse> {
 
+        var badRequest = false
+        var badRequestResponse = ""
         if (!signUpTokenRepository.existsByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken)) {
-            return ResponseEntity(
-                ApiResponse(false, "Token invalid or expired!"),
-                HttpStatus.BAD_REQUEST
-            )
+            badRequest = true
+            badRequestResponse = "Token invalid or expired!"
         }
 
         if (userRepository.existsByUsername(signUpRequest.username)) {
-            return ResponseEntity(
-                    ApiResponse(false, "Username is already taken!"),
-                    HttpStatus.BAD_REQUEST
-            )
+            badRequest = true
+            badRequestResponse = "Username is already taken!"
         }
 
         if (userRepository.existsByEmail(signUpRequest.email)) {
+            badRequest = true
+            badRequestResponse = "Email is already in use!"
+        }
+        if (badRequest) {
             return ResponseEntity(
-                    ApiResponse(false, "Email is already in use!"),
+                    ApiResponse(false, badRequestResponse),
                     HttpStatus.BAD_REQUEST
             )
         }
 
         val userRoles = signUpTokenRepository.findByEmailAndToken(signUpRequest.email, signUpRequest.signUpToken).roles
-
         val password = passwordEncoder.encode(signUpRequest.password)
-
         val user = User(
                 UUID.randomUUID().toString(),
                 signUpRequest.name,
@@ -89,7 +92,6 @@ class AuthenticationController {
         )
 
         val result = userRepository.save(user)
-
         val location = ServletUriComponentsBuilder
                 .fromCurrentContextPath().path("/api/users/{username}")
                 .buildAndExpand(result.username).toUri()

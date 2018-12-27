@@ -6,12 +6,12 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest
 import com.amazonaws.services.s3.model.ListObjectsV2Result
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.util.IOUtils
-import com.hshar.tesserakt.Exception.AwsS3Exception
+import com.hshar.tesserakt.exception.AwsS3Exception
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.io.*
+import java.io.IOException
 
 @Service
 class S3AwsService {
@@ -66,9 +66,10 @@ class S3AwsService {
                 .withKeys(*objects.toTypedArray())
             AmazonS3ClientBuilder.defaultClient().deleteObjects(dor)
 
-            return true
         } catch (e: AmazonServiceException) {
             return false
         }
+
+        return true
     }
 }

@@ -1,11 +1,15 @@
 package com.hshar.tesserakt.model
 
-import com.hshar.tesserakt.type.*
+import com.hshar.tesserakt.type.Jurisdiction
+import com.hshar.tesserakt.type.LoanType
+import com.hshar.tesserakt.type.AssetRating
+import com.hshar.tesserakt.type.AssetClass
+import com.hshar.tesserakt.type.Status
 import org.springframework.data.mongodb.core.mapping.DBRef
 import org.springframework.data.mongodb.core.mapping.Document
-import java.util.*
+import java.util.Date
 
-@Document(collection="deals")
+@Document(collection = "deals")
 data class Deal(
     val id: String,
     @DBRef
