@@ -15,7 +15,6 @@ import org.litote.kmongo.lte
 import org.litote.kmongo.contains
 import org.litote.kmongo.find
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
 import java.util.Date
 import java.util.UUID
@@ -32,8 +31,7 @@ class DealMatcher {
     @Autowired
     lateinit var kmongoConfig: KmongoConfig
 
-    @KafkaListener(topics = ["streaming.deals.newDeals"], groupId = "tesserakt")
-    fun listen(message: String) {
+    suspend fun checkMatchup(message: String) {
 
         val col = kmongoConfig.kMongoDb().getCollection("matching_criteria")
         val deal = Gson().fromJson<Deal>(message)
