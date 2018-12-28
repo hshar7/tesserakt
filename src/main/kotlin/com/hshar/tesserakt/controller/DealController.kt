@@ -14,13 +14,15 @@ import com.hshar.tesserakt.repository.SyndicateRepository
 import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
-import com.hshar.tesserakt.service.KafkaService
+import com.hshar.tesserakt.service.DealMatcher
 import com.hshar.tesserakt.service.Web3jService
 import com.hshar.tesserakt.type.AssetClass
 import com.hshar.tesserakt.type.AssetRating
 import com.hshar.tesserakt.type.Jurisdiction
 import com.hshar.tesserakt.type.LoanType
 import com.hshar.tesserakt.type.Status
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -58,7 +60,7 @@ class DealController {
     lateinit var web3jService: Web3jService
 
     @Autowired
-    lateinit var kafkaService: KafkaService
+    lateinit var dealMatcher: DealMatcher
 
     @GetMapping("/deal/{id}")
     @PreAuthorize("hasAnyRole('UNDERWRITER','LENDER', 'ADMIN')")
@@ -130,7 +132,11 @@ class DealController {
         )
 
         web3jService.sendNewDealAsync(theRealDeal)
-        kafkaService.sendNewDeal(theRealDeal)
+        runBlocking {
+            async {
+                dealMatcher.checkMatchup(Gson().toJson(theRealDeal))
+            }
+        }
 
         return dealRepository.insert(theRealDeal)
     }
