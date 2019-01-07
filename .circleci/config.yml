@@ -31,7 +31,7 @@ jobs:
 
       - setup_remote_docker
 
-      - deploy_docker:
+      - deploy:
           name: Deploy jar artficat to ECR if branch is master
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -44,12 +44,6 @@ jobs:
               aws configure set default.region us-east-2
               $(aws ecr get-login --no-include-email)
               docker push 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
-            fi
-
-      - deploy_kubernetes:
-          name: Rollout to k8s if branch is master
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
               openssl aes-256-cbc -e -in kubeconfig-ciphered -out kubeconfig -k "${kubeconfig_key}"
               mv kubeconfig ~/.kube/config
               kubectl patch deployment tesserakt-deployment -p \
