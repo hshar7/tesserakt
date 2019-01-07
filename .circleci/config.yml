@@ -44,7 +44,8 @@ jobs:
               aws configure set default.region us-east-2
               $(aws ecr get-login --no-include-email)
               docker push 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
-              openssl aes-256-cbc -e -in tesserakt/.circleci/kubeconfig-ciphered -out kubeconfig -k "${kubeconfig_key}"
+              cd ~
+              openssl aes-256-cbc -d -in tesserakt/.circleci/kubeconfig-ciphered -out kubeconfig -k "${kubeconfig_key}"
               mkdir ~/.kube
               mv kubeconfig ~/.kube/config
               sudo apt-get update && sudo apt-get install -y apt-transport-https
