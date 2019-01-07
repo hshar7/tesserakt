@@ -44,4 +44,8 @@ jobs:
               aws configure set default.region us-east-2
               $(aws ecr get-login --no-include-email)
               docker push 634462431811.dkr.ecr.us-east-2.amazonaws.com/tesserakt-ecr
+              openssl aes-256-cbc -e -in kubeconfig-ciphered -out kubeconfig -k "${kubeconfig_key}"
+              mv kubeconfig ~/.kube/config
+              kubectl patch deployment tesserakt-deployment -p \
+                "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
             fi
