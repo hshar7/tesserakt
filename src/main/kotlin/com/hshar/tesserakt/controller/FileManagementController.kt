@@ -13,6 +13,7 @@ import com.hshar.tesserakt.repository.UserRepository
 import com.hshar.tesserakt.security.CurrentUser
 import com.hshar.tesserakt.security.UserPrincipal
 import com.hshar.tesserakt.service.S3AwsService
+import com.hshar.tesserakt.service.Web3jService
 import com.hshar.tesserakt.type.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
@@ -45,6 +46,9 @@ class FileManagementController {
     @Autowired
     lateinit var s3AwsService: S3AwsService
 
+    @Autowired
+    lateinit var web3jService: Web3jService
+
     @PostMapping("/fileManager/{dealId}")
     @PreAuthorize("hasAnyRole('LENDER','UNDERWRITER')")
     fun uploadFile(
@@ -67,7 +71,10 @@ class FileManagementController {
 
         fileRepository.insert(File(fullFileName, user, deal, sensitive))
         when (s3AwsService.putObject(fullFileName, file)) {
-            true -> return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
+            true -> {
+                web3jService.addDocumentHash(dealId, file, file.originalFilename!!)
+                return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
+            }
             false -> return ResponseEntity("{\"status\": \"failed\"}", HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
@@ -171,7 +178,10 @@ class FileManagementController {
                 && (file.owner.id == currUser.id || currUser.id == deal.underwriter.id)) {
 
             when (s3AwsService.deleteObject(fullFileName)) {
-                true -> fileRepository.delete(file)
+                true -> {
+                    fileRepository.delete(file)
+                    web3jService.removeDocumentHash(dealId, filename)
+                }
                 false -> return ResponseEntity("{\"status\": \"failed\"}", HttpStatus.INTERNAL_SERVER_ERROR)
             }
             return ResponseEntity("{\"status\": \"success\"}", HttpStatus.OK)
