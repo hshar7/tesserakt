@@ -1,10 +1,15 @@
 package com.hshar.tesserakt.service
 
+import com.github.salomonbrys.kotson.fromJson
+import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.hshar.tesserakt.contract.DealLedger
 import com.hshar.tesserakt.model.Deal
+import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import org.web3j.protocol.Web3j
 import org.web3j.quorum.tx.ClientTransactionManager
 import org.web3j.tuples.generated.Tuple5
@@ -17,7 +22,7 @@ class Web3jService {
     lateinit var web3jQuorum: Web3j
 
     companion object {
-        const val CONTRACT_ADDRESS = "0xE718dd5406B8b981A0992678002f78215bE1a1db"
+        const val CONTRACT_ADDRESS = "0x98a3bc206185a0770C4A847CD082FbB355dB08aE"
         const val GAS_PRICE = 200
         const val GAS_LIMIT = 4500000
     }
@@ -47,7 +52,8 @@ class Web3jService {
                 deal.assetClass.toString(),
                 deal.assetRating.toString(),
                 Gson().toJson(deal.syndicate),
-                deal.status.toString()
+                deal.status.toString(),
+                "{}"
         ).sendAsync()
     }
 
@@ -67,6 +73,22 @@ class Web3jService {
                 Gson().toJson(deal.syndicate),
                 deal.status.toString()
         ).sendAsync()
+    }
+
+    fun addDocumentHash(dealId: String, document: MultipartFile, documentName: String) {
+        val documentHashesJson = loadDealLedgerContract().getDocumentHashes(dealId).send()
+        val documentHashesObject = Gson().fromJson<JsonObject>(documentHashesJson)
+
+        documentHashesObject[documentName] = DigestUtils.sha256Hex(document.bytes)
+        loadDealLedgerContract().updateDocumentHashes(dealId, Gson().toJson(documentHashesObject)).sendAsync()
+    }
+
+    fun removeDocumentHash(dealId: String, documentName: String) {
+        val documentHashesJson = loadDealLedgerContract().getDocumentHashes(dealId).send()
+        val documentHashesObject = Gson().fromJson<JsonObject>(documentHashesJson)
+
+        documentHashesObject.remove(documentName)
+        loadDealLedgerContract().updateDocumentHashes(dealId, Gson().toJson(documentHashesJson)).sendAsync()
     }
 
     fun getDealStatus(dealId: String): String {
