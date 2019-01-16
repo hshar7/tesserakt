@@ -26,11 +26,12 @@ class S3AwsService {
             val metadata = ObjectMetadata()
             metadata.contentType = file.contentType
             AmazonS3ClientBuilder.defaultClient().putObject(bucketName, name, file.inputStream, metadata)
-            return true
         } catch (e: AmazonServiceException) {
             logger.error(e.message)
             return false
         }
+
+        return true
     }
 
     fun getObject(name: String): ByteArray {

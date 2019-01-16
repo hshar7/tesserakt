@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.5.2;
 
 contract DealLedger {
     struct Member {
@@ -21,24 +21,26 @@ contract DealLedger {
         string assetRating;
         string syndicateObject;
         string status;
+        string documentHashesJson;
     }
 
     mapping (string => Deal) private deals;
 
     function addDeal(
-        string dealId,
-        string underwriterId,
+        string memory dealId,
+        string memory underwriterId,
         address underwriterAddress,
-        string borrowerName,
-        string jurisdiction,
-        string capitalAmount,
-        string interestRate,
-        string loanType,
+        string memory borrowerName,
+        string memory jurisdiction,
+        string memory capitalAmount,
+        string memory interestRate,
+        string memory loanType,
         uint maturity,
-        string assetClass,
-        string assetRating,
-        string syndicateObject,
-        string status) public {
+        string memory assetClass,
+        string memory assetRating,
+        string memory syndicateObject,
+        string memory status,
+        string memory documentHashesJson) public {
 
         deals[dealId] = Deal({
             underwriterId: underwriterId,
@@ -52,36 +54,42 @@ contract DealLedger {
             assetClass: assetClass,
             assetRating: assetRating,
             syndicateObject: syndicateObject,
-            status: status
+            status: status,
+            documentHashesJson: documentHashesJson
             });
     }
 
-    function getDealStatus(string dealId) view public returns (string) {
+    function getDealStatus(string memory dealId) view public returns (string memory) {
         Deal memory deal = deals[dealId];
 
         return deal.status;
     }
 
-    function getDealSummary(string dealId) view public returns (string, string, string, string, uint) {
-        Deal memory deal = deals[dealId];
+    function getDealSummary(string memory dealId) view public returns (
+        string memory,
+        string memory,
+        string memory,
+        string memory,
+        uint) {
 
+        Deal memory deal = deals[dealId];
         return (deal.borrowerName, deal.jurisdiction, deal.capitalAmount, deal.interestRate, deal.maturity);
     }
 
     function updateDeal(
-        string dealId,
-        string underwriterId,
+        string memory dealId,
+        string memory underwriterId,
         address underwriterAddress,
-        string borrowerName,
-        string jurisdiction,
-        string capitalAmount,
-        string interestRate,
-        string loanType,
+        string memory borrowerName,
+        string memory jurisdiction,
+        string memory capitalAmount,
+        string memory interestRate,
+        string memory loanType,
         uint maturity,
-        string assetClass,
-        string assetRating,
-        string syndicateObject,
-        string status) public {
+        string memory assetClass,
+        string memory assetRating,
+        string memory syndicateObject,
+        string memory status) public {
         Deal memory deal = deals[dealId];
 
         deal.underwriterId = underwriterId;
@@ -98,5 +106,13 @@ contract DealLedger {
         deal.status = status;
 
         deals[dealId] = deal;
+    }
+
+    function updateDocumentHashes(string memory dealId, string memory documentHashesJson) public {
+        deals[dealId].documentHashesJson = documentHashesJson;
+    }
+
+    function getDocumentHashes(string memory dealId) view public returns (string memory) {
+        return deals[dealId].documentHashesJson;
     }
 }
