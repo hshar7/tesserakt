@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:10.9
+    working_directory: ~/src
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      # - run: npm test
+
+      - run: npm run build
+
+      - deploy:
+          name: Deploy to S3 if branch is master
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              sudo apt install python-pip python-dev
+              sudo pip install awscli
+              aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
+              aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
+              aws configure set default.region us-east-2
+              aws s3 sync ~/src/build s3://tesserakt-react/ --delete
+            fi
